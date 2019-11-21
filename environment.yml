@@ -1,0 +1,8 @@
+name: dynamicAE
+dependencies:
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - pytorch
+  - torchvision
