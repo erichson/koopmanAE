@@ -55,11 +55,10 @@ def error_summary(data_loader, model, train_or_test='training'):
         for batch_idx, data_list in enumerate(data_loader):
 
             # Relative Error
-            out, _ = model(data_list[0])
+            out = model(data_list[0])[0]
 
-            output = out[0].cpu().data.numpy().reshape(out[0].shape[0],-1)
-            target = data_list[0].cpu().data.numpy().reshape(data_list[0].shape[0],-1)
-
+            output = out[0].cpu().data.numpy().reshape(out[0].shape[0], -1)
+            target = data_list[0].cpu().data.numpy().reshape(data_list[0].shape[0], -1)
             error.append(np.linalg.norm(target - output) / np.linalg.norm(target))
 
 
