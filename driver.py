@@ -198,7 +198,7 @@ print(model)
 #==============================================================================
 # Start training
 #==============================================================================
-model, optimizer, error_train, error_test, epoch_hist  = train(model, train_loader, test_loader,
+model, optimizer, error_train, error_test, epoch_hist = train(model, train_loader, test_loader,
                     lr=args.lr, weight_decay=args.wd, lamb=args.lamb, num_epochs = args.epochs,
                     learning_rate_change=args.lr_decay, epoch_update=args.lr_update,
                     gamma = args.gamma)
@@ -272,7 +272,6 @@ for i in range(30):
 
             for j in range(args.pred_steps):
                 z = model.module.dynamics(z) # evolve system in time
-                
                 x_pred = model.module.decoder(z) # map back to high-dimensional space
                 target_temp = Xtarget[i+j].data.cpu().numpy().reshape(m,n)
                 error_temp.append(np.linalg.norm(x_pred.data.cpu().numpy().reshape(m,n) - target_temp) / np.linalg.norm(target_temp))

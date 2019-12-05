@@ -65,7 +65,10 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                     param_group['weight_decay_adapt'] = weight_decay
                 return optimizer  
 
-    
+
+
+
+
                      
         
     criterion = nn.MSELoss().cuda()
@@ -165,4 +168,4 @@ def train(model, train_loader, test_loader, lr, weight_decay,
 
                 
                 
-    return model, optimizer, error_train, error_test, epoch_hist           
+    return model, optimizer, error_train, error_test, epoch_hist
