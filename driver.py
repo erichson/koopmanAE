@@ -63,11 +63,11 @@ parser.add_argument('--model', type=str, default='net', metavar='N', help='Model
 #
 parser.add_argument('--dataset', type=str, default='harmonic', metavar='N', help='dataset')
 #
-parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learning rate (default: 0.01)')
+parser.add_argument('--lr', type=float, default=1e-1, metavar='N', help='learning rate (default: 0.01)')
 #
-parser.add_argument('--wd', type=float, default=1e-5, metavar='N', help='weight_decay (default: 1e-5)')
+parser.add_argument('--wd', type=float, default=0.0, metavar='N', help='weight_decay (default: 1e-5)')
 #
-parser.add_argument('--epochs', type=int, default=300, metavar='N', help='number of epochs to train (default: 10)')
+parser.add_argument('--epochs', type=int, default=600, metavar='N', help='number of epochs to train (default: 10)')
 #
 parser.add_argument('--batch', type=int, default=64, metavar='N', help='batch size (default: 10000)')
 #
@@ -75,17 +75,17 @@ parser.add_argument('--batch_test', type=int, default=50, metavar='N', help='bat
 #
 parser.add_argument('--plotting', type=bool, default=True, metavar='N', help='number of epochs to train (default: 10)')
 #
-parser.add_argument('--folder', type=str, default='results',  help='specify directory to print results to')
+parser.add_argument('--folder', type=str, default='results_det',  help='specify directory to print results to')
 #
-parser.add_argument('--lamb', type=float, default='4',  help='PCL penalty lambda hyperparameter')
+parser.add_argument('--lamb', type=float, default='1',  help='PCL penalty lambda hyperparameter')
 #
 parser.add_argument('--gamma', type=float, default='0',  help='Depricated')
 #
-parser.add_argument('--steps', type=int, default='3',  help='steps for omega')
+parser.add_argument('--steps', type=int, default='4',  help='steps for omega')
 #
 parser.add_argument('--bottleneck', type=int, default='2',  help='bottleneck')
 #
-parser.add_argument('--lr_update', type=int, nargs='+', default=[50, 100, 200], help='Decrease learning rate at these epochs.')
+parser.add_argument('--lr_update', type=int, nargs='+', default=[100, 300, 400], help='Decrease learning rate at these epochs.')
 #
 parser.add_argument('--lr_decay', type=float, default='0.2',  help='PCL penalty lambda hyperparameter')
 #
@@ -98,9 +98,9 @@ parser.add_argument('--seed', type=int, default='1',  help='Prediction steps')
 args = parser.parse_args()
 
 
-# set random seed to 0
-np.random.seed(args.seed)
-torch.manual_seed(args.seed)
+
+set_seed()
+device = get_device()
 
 
 
@@ -267,7 +267,7 @@ error = []
 for i in range(30):
             error_temp = []
             
-            z = model.module.encoder(Xinput[i].float()) # embedd data in latent space
+            z = model.module.encoder(Xinput[i].float().to(device)) # embedd data in latent space
 
 
             for j in range(args.pred_steps):
@@ -314,7 +314,7 @@ Xinput, Xtarget = Xtest[:-1], Xtest[1:]
 
 emb = []
             
-z = model.module.encoder(Xinput[i].float()) # embedd data in latent space
+z = model.module.encoder(Xinput[i].float().to(device)) # embedd data in latent space
 
 for j in range(args.pred_steps):
     z = model.module.dynamics(z) # evolve system in time
@@ -325,8 +325,8 @@ emb = np.asarray(emb)
 fig = plt.figure(figsize=(15,15))
 plt.plot(emb[:,0], emb[:,1], '-', lw=1, label='', color='#377eb8')
 
-plt.xlim(-1.1,1.1)
-plt.ylim(-1.1,1.1)
+plt.xlim(-1.6, 1.6)
+plt.ylim(-1.6, 1.6)
 
 plt.tick_params(axis='x', labelsize=22)
 plt.tick_params(axis='y', labelsize=22)

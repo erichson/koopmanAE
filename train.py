@@ -33,7 +33,7 @@ def train(model, train_loader, test_loader, lr, weight_decay,
           lamb, num_epochs, learning_rate_change, epoch_update, gamma=0.0):
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=weight_decay)
-
+    device = get_device()
 
     alpha_list = []
     for idx, (name, param) in enumerate(model.named_parameters()):
@@ -71,8 +71,8 @@ def train(model, train_loader, test_loader, lr, weight_decay,
 
                      
         
-    criterion = nn.MSELoss().cuda()
-    criterion2 = nn.L1Loss().cuda()
+    criterion = nn.MSELoss().to(device)
+    #criterion2 = nn.L1Loss().cuda()
 
 
     error_train = []    
@@ -89,13 +89,13 @@ def train(model, train_loader, test_loader, lr, weight_decay,
         for batch_idx, data_list in enumerate(train_loader):            
     
             model.train()
-            out, out_back = model(data_list[0])
+            out, out_back = model(data_list[0].to(device))
             
             for k in range(len(data_list)-1):
                 if k == 0:
-                    loss_pred = criterion(out[k], data_list[k+1])
+                    loss_pred = criterion(out[k], data_list[k+1].to(device))
                 else:
-                    loss_pred += criterion(out[k], data_list[k+1])
+                    loss_pred += criterion(out[k], data_list[k+1].to(device))
 
             
 #            for k in range(1):
@@ -106,7 +106,7 @@ def train(model, train_loader, test_loader, lr, weight_decay,
             
             
             
-            loss_identity = criterion(out[len(data_list)-1], data_list[0])
+            loss_identity = criterion(out[len(data_list)-1], data_list[0].to(device))
             loss = loss_pred + lamb * loss_identity #+  0 * loss_back
 
 

@@ -23,6 +23,9 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
           lamb, num_epochs, learning_rate_change, epoch_update, gamma=0.0):
     # optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=weight_decay)
 
+    device = get_device()
+
+
     alpha_list = []
     for idx, (name, param) in enumerate(model.named_parameters()):
         if param.requires_grad:
@@ -49,7 +52,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             param_group['weight_decay_adapt'] = weight_decay
         return optimizer
 
-    criterion = nn.MSELoss().cuda()
+    #criterion = nn.MSELoss()#.cuda()
 
     error_train = []
     error_test = []
@@ -66,15 +69,16 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             loss = 0
             beta = 0.0001
             gamma = 0.0001
-            reconstruction_y_i, mu_i, logvar_i, dinamyc_ip, x_i = model(data_list[0])
+            
+            reconstruction_y_i, mu_i, logvar_i, dinamyc_ip, x_i = model(data_list[0].to(device))
             for k in range(len(data_list) - 1):
-                _, mu_i, logvar_i, dinamyc_ip, x_i = model(data_list[k])
-                _, mu_ip, logvar_ip, dinamyc_ipp, x_ip = model(data_list[k+1])
-                mse, entropy, dynamic_mse, dynamic_entropy = model.module.loss_function(reconstruction_y_i[k], data_list[k+1],
+                _, mu_i, logvar_i, dinamyc_ip, x_i = model(data_list[k].to(device))
+                _, mu_ip, logvar_ip, dinamyc_ipp, x_ip = model(data_list[k+1].to(device))
+                mse, entropy, dynamic_mse, dynamic_entropy = model.module.loss_function(reconstruction_y_i[k], data_list[k+1].to(device),
                                                       mu_i, mu_ip, logvar_i, logvar_ip, first_step=False)
                 loss += mse - gamma*entropy/data_list[0].shape[0] + beta*(dynamic_mse + dynamic_entropy)
 
-            loss_identity = torch.nn.functional.mse_loss(reconstruction_y_i[len(data_list) - 1], data_list[0])
+            loss_identity = torch.nn.functional.mse_loss(reconstruction_y_i[len(data_list) - 1], data_list[0].to(device))
             loss = loss + lamb * loss_identity  # +  0 * loss_back
             #print(loss_identity)
             # ===================backward====================

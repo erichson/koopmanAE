@@ -22,6 +22,22 @@ import numpy as np
 
 import torch.nn.init as init
 
+def set_seed():
+    """Set one seed for reproducibility."""
+    np.random.seed(10)
+    torch.manual_seed(10)
+
+def get_device():
+    """Get a gpu if available."""
+    if torch.cuda.device_count()>0:
+        device = torch.device('cuda')
+        print("Connected to a GPU")
+    else:
+        print("Using the CPU")
+        device = torch.device('cpu')
+    return device
+
+
 def add_channels(X):
     if len(X.shape) == 2:
         return X.reshape(X.shape[0], 1, X.shape[1],1)
