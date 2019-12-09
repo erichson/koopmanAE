@@ -49,8 +49,6 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             param_group['weight_decay_adapt'] = weight_decay
         return optimizer
 
-    criterion = nn.MSELoss().cuda()
-
     error_train = []
     error_test = []
     epoch_hist = []
@@ -81,6 +79,10 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            #TODO: regularization only once per epoch
+            #TODO: forward and backward dynamics
+            #TODO: clean up code with .to(device)
+            #TODO: confidence interval
 
             # schedule learning rate decay
         exp_lr_scheduler(optimizer, epoch, lr_decay_rate=learning_rate_change, decayEpoch=epoch_update)
