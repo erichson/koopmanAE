@@ -70,13 +70,34 @@ class Dynamics(nn.Module):
         return mu_p, cholesky_cov
 
 
+class BackDynamics(nn.Module):
+    def __init__(self, b):
+        super(BackDynamics, self).__init__()
+        self.dynamics = nn.Linear(b, b, bias=False)
+
+    def forward(self, x):
+        # 1 to 1 map
+        x = self.dynamics(x)
+        return x
+
+    def forward_dist(self, mu, cov, step):
+        mu_p = self.dynamics(mu)
+        omega = self.dynamics.weight
+        cov = torch.squeeze(cov)
+        if len(cov.shape) < 3:
+            cov = torch.diag_embed(cov)
+        cholesky_cov = torch.matmul(torch.matrix_power(omega, step), torch.sqrt(cov))
+        return mu_p, cholesky_cov
+
+
+
 class DynamicVAE(nn.Module):
     def __init__(self, m, n, b, steps):
         super(DynamicVAE, self).__init__()
         self.steps = steps
         self.encoder = VEncoderNet(m, n, b)
         self.dynamics = Dynamics(b)
-        self.backdynamics = Dynamics(b)
+        self.backdynamics = BackDynamics(b)
         self.decoder = VDecoderNet(m, n, b)
 
     def reparametrize(self, mu, logvar):
@@ -113,8 +134,10 @@ class DynamicVAE(nn.Module):
         return out, mu_i, logvar_i, dynamic_ip, x_i, out_back
 
     def loss_function(self, reconstruction_y_i, y_i, mu_i, mu_ip, logvar_i, logvar_ip, backward=False):
-        if backward: dynamics = self.backdynamics
-        else: dynamics = self.dynamics
+        if backward: 
+            dynamics = self.backdynamics
+        else: 
+            dynamics = self.dynamics
 
         mse = torch.nn.functional.mse_loss(reconstruction_y_i, y_i)
         entropy = 0.5 * torch.mean(logvar_i)

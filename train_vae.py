@@ -68,7 +68,10 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             model.train()
             beta = 0.0001
             gamma = 0.0001
-            for d in data_list: d.to(device)
+            #for d in data_list: 
+            #    d.to(device)
+                
+            data_list = [d.to(device) for d in data_list]    
 
             reconstruction_y_i, _, _, _, _, _ = model(data_list[0])
             mse, entropy, dynamic_mse, dynamic_entropy, loss_identity = \
@@ -80,7 +83,19 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
                 mse_b, entropy_b, dynamic_mse_b, dynamic_entropy_b, loss_identity_b = \
                     model.module.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i, backward=True)
 
-                loss += mse_b - gamma*entropy_b + beta*(dynamic_mse_b + dynamic_entropy_b) + lamb*loss_identity_b
+                loss += (mse_b - gamma*entropy_b + beta*(dynamic_mse_b + dynamic_entropy_b) + lamb*loss_identity_b) * 1e-2
+
+    
+                # AB = I and BA = I
+                A = model.module.dynamics.dynamics.weight
+                B = model.module.backdynamics.dynamics.weight
+                AB = torch.mm(A, B)
+                BA = torch.mm(B, A)
+                I = torch.eye(AB.shape[0]).float().cuda()
+                
+                loss_consist = 1e-1 * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
+                loss += loss_consist
+
 
             # ===================backward====================
             optimizer.zero_grad()
@@ -88,8 +103,10 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             optimizer.step()
             #TODO: regularization wit gaussian prior once per epoch
             #TODO: confidence interval
+            
+            
 
-            # schedule learning rate decay
+        # schedule learning rate decay
         exp_lr_scheduler(optimizer, epoch, lr_decay_rate=learning_rate_change, decayEpoch=epoch_update)
         loss_hist.append(loss)
         epoch_loss.append(epoch)

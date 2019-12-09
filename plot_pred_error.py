@@ -13,6 +13,8 @@ mpl.style.use('seaborn-paper')
 
 result1 = np.load('results_det/000_pred.npy')                  
 result2 = np.load('results/000_pred.npy') 
+result3 = np.load('results_back/000_pred.npy') 
+
 #pcl = np.load('results_pcl/000_pred.npy') 
   
 #nopcl_relu = np.load('results_flow_nopcl_relu/000_pred.npy')              
@@ -35,8 +37,8 @@ plt.plot(np.mean(result2, axis=0), 'o--', lw=3, label='Variational Dynamic AE', 
 plt.fill_between(x=range(result2.shape[1]), y1=np.mean(result2, axis=0)-np.var(result2, axis=0)**0.5, y2=np.mean(result2, axis=0)+np.var(result2, axis=0)**0.5, color='#31a354', alpha=0.2)         
 #plt.fill_between(x=range(pcl.shape[1]), y1=np.quantile(pcl, .01, axis=0), y2=np.quantile(pcl, .99, axis=0), color='#f03b20', alpha=0.2)                   
                  
-#plt.plot(np.mean(pcl, axis=0), 'o--', lw=3, label='Physics-aware', color='#f03b20')            
-#plt.fill_between(x=range(pcl.shape[1]), y1=np.mean(pcl, axis=0)-np.var(pcl, axis=0)**0.5, y2=np.mean(pcl, axis=0)+np.var(pcl, axis=0)**0.5, color='#f03b20', alpha=0.2)         
+plt.plot(np.mean(result3, axis=0), 'o--', lw=3, label='Variational Dynamic AE (backwards)', color='#f03b20')            
+plt.fill_between(x=range(result3.shape[1]), y1=np.mean(result3, axis=0)-np.var(result3, axis=0)**0.5, y2=np.mean(result3, axis=0)+np.var(result3, axis=0)**0.5, color='#f03b20', alpha=0.2)         
 #plt.fill_between(x=range(pcl.shape[1]), y1=np.quantile(pcl, .01, axis=0), y2=np.quantile(pcl, .99, axis=0), color='#f03b20', alpha=0.2)         
              
                  
