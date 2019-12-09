@@ -261,4 +261,20 @@ def plot_sst(sstframe):
     plt.show()
 
 
-    
+def confidence_ellipse(mu, cov, ax, n_std=3.0, facecolor='none', **kwargs):
+    from matplotlib.patches import Ellipse
+
+    def eigsorted(cov):
+        vals, vecs = np.linalg.eigh(cov)
+        order = vals.argsort()[::-1]
+        return vals[order], vecs[:, order]
+
+    vals, vecs = eigsorted(cov)
+    theta = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
+    w, h = 2 * n_std * np.sqrt(vals)
+    ell = Ellipse(xy=mu,
+                  width=w, height=h,
+                  angle=theta, facecolor=facecolor, **kwargs)
+    ax.add_artist(ell)
+
+    return ax.add_patch(ell)

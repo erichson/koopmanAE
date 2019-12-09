@@ -93,6 +93,8 @@ parser.add_argument('--lr_update', type=int, nargs='+', default=[100, 300, 500],
 parser.add_argument('--lr_decay', type=float, default='0.2', help='PCL penalty lambda hyperparameter')
 #
 parser.add_argument('--pred_steps', type=int, default='1000', help='Prediction steps')
+
+parser.add_argument('--backward', type=bool, default=True, help='whether to train also with backward dynamics')
 #
 parser.add_argument('--seed', type=int, default='1', help='Prediction steps')
 #
@@ -198,7 +200,7 @@ model, optimizer, error_train, error_test, epoch_hist = train_vae(model, train_l
                                                               num_epochs=args.epochs,
                                                               learning_rate_change=args.lr_decay,
                                                               epoch_update=args.lr_update,
-                                                              gamma=args.gamma)
+                                                              gamma=args.gamma, backward=args.backward)
 
 
 
@@ -253,11 +255,12 @@ for i in range(30):
     error_temp = []
 
     mu, logvar = model.module.encoder(Xinput[i].float().to(device))  # embedd data in latent space
-    z = model.module.reparametrize(mu, logvar)
-    z = mu
+    var = torch.exp(logvar)
     for j in range(args.pred_steps):
-        z = model.module.dynamics(z)  # evolve system in time
-        x_pred = model.module.decoder(z)  # map back to high-dimensional space
+        mu, cholesk_dec = model.module.dynamics.forward_dist(mu, var, j + 1)
+        cholesk_dec = cholesk_dec.unsqueeze(0)
+        z = model.module.reparametrize_multidim(mu, cholesk_dec)
+        x_pred = model.module.decoder.forward(z)
         target_temp = Xtarget[i + j].data.cpu().numpy().reshape(m, n)
         error_temp.append(
             np.linalg.norm(x_pred.data.cpu().numpy().reshape(m, n) - target_temp) / np.linalg.norm(target_temp))
@@ -295,19 +298,30 @@ np.save(args.folder + '/000_pred.npy', error)
 Xinput, Xtarget = Xtest[:-1], Xtest[1:]
 
 emb = []
+mu_emb = []
+var_emb = []
 
-mu, logvar = model.module.encoder(Xinput[i].float().to(device))  # embedd data in latent space
-z = model.module.reparametrize(mu, logvar)
+mu, logvar = model.module.encoder(Xinput[0].float().to(device))  # embedd data in latent space
+var = torch.exp(logvar)
 
 for j in range(args.pred_steps):
-    z = model.module.dynamics(z)  # evolve system in time
+    mu, cholesk_dec = model.module.dynamics.forward_dist(mu, var, j + 1)
+    cholesk_dec = cholesk_dec.unsqueeze(0)
+    z = model.module.reparametrize_multidim(mu, cholesk_dec)
     emb.append(z.data.cpu().numpy().reshape(args.bottleneck))
+    mu_emb.append(mu.data.cpu().numpy().reshape(args.bottleneck))
+    cholesk_dec_numpy = cholesk_dec.data.cpu().numpy().reshape((args.bottleneck, args.bottleneck))
+    var_emb.append(np.matmul(cholesk_dec_numpy, cholesk_dec_numpy.T))
 
 emb = np.asarray(emb)
-
+mu_emb = np.asarray(mu_emb)
+var_emb = np.asarray(var_emb)
 fig = plt.figure(figsize=(15, 15))
+ax = fig.add_subplot(111)
 plt.plot(emb[:, 0], emb[:, 1], '-', lw=1, label='', color='#377eb8')
-
+plt.plot(mu_emb[:, 0], mu_emb[:, 1], '-', lw=1, label='', color='#377eb8')
+for mu_i, cov_i in zip(mu_emb, var_emb):
+    confidence_ellipse(mu_i, cov_i, ax, n_std=3, alpha=0.2, facecolor='blue')
 plt.xlim(-1.6, 1.6)
 plt.ylim(-1.6, 1.6)
 
@@ -316,8 +330,8 @@ plt.tick_params(axis='y', labelsize=22)
 plt.locator_params(axis='y', nbins=10)
 plt.locator_params(axis='x', nbins=10)
 
-plt.ylabel('Relative prediction error', fontsize=22)
-plt.xlabel('Time step', fontsize=22)
+plt.ylabel('y', fontsize=22)
+plt.xlabel('x', fontsize=22)
 plt.grid(False)
 # plt.yscale("log")
 # plt.legend(fontsize=22)

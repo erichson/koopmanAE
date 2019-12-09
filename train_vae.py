@@ -20,7 +20,7 @@ from Adam_new import *
 
 
 def train_vae(model, train_loader, test_loader, lr, weight_decay,
-          lamb, num_epochs, learning_rate_change, epoch_update, gamma=0.0):
+          lamb, num_epochs, learning_rate_change, epoch_update, gamma=0.0, backward=False):
     # optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=weight_decay)
 
     device = get_device()
@@ -66,28 +66,27 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
         for batch_idx, data_list in enumerate(train_loader):
 
             model.train()
-            loss = 0
             beta = 0.0001
             gamma = 0.0001
-            
-            reconstruction_y_i, mu_i, logvar_i, dinamyc_ip, x_i = model(data_list[0].to(device))
-            for k in range(len(data_list) - 1):
-                _, mu_i, logvar_i, dinamyc_ip, x_i = model(data_list[k].to(device))
-                _, mu_ip, logvar_ip, dinamyc_ipp, x_ip = model(data_list[k+1].to(device))
-                mse, entropy, dynamic_mse, dynamic_entropy = model.module.loss_function(reconstruction_y_i[k], data_list[k+1].to(device),
-                                                      mu_i, mu_ip, logvar_i, logvar_ip, first_step=False)
-                loss += mse - gamma*entropy/data_list[0].shape[0] + beta*(dynamic_mse + dynamic_entropy)
+            for d in data_list: d.to(device)
 
-            loss_identity = torch.nn.functional.mse_loss(reconstruction_y_i[len(data_list) - 1], data_list[0].to(device))
-            loss = loss + lamb * loss_identity  # +  0 * loss_back
-            #print(loss_identity)
+            reconstruction_y_i, _, _, _, _, _ = model(data_list[0])
+            mse, entropy, dynamic_mse, dynamic_entropy, loss_identity = \
+                model.module.loss_function_multistep(data_list, reconstruction_y_i)
+            loss = mse - gamma * entropy + beta * (dynamic_mse + dynamic_entropy) + lamb * loss_identity
+
+            if backward:
+                _, _, _, _, _, reconstruction_y_i_back = model(data_list[-1])
+                mse_b, entropy_b, dynamic_mse_b, dynamic_entropy_b, loss_identity_b = \
+                    model.module.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i, backward=True)
+
+                loss += mse_b - gamma*entropy_b + beta*(dynamic_mse_b + dynamic_entropy_b) + lamb*loss_identity_b
+
             # ===================backward====================
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            #TODO: regularization only once per epoch
-            #TODO: forward and backward dynamics
-            #TODO: clean up code with .to(device)
+            #TODO: regularization wit gaussian prior once per epoch
             #TODO: confidence interval
 
             # schedule learning rate decay
@@ -96,7 +95,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
         epoch_loss.append(epoch)
 
         if (epoch) % 20 == 0:
-            print('********** Epoche %s **********' % (epoch + 1))
+            print('********** Epoch %s **********' % (epoch + 1))
 
             #print("loss identity: ", loss_identity.item())
             #print("loss prediction: ", loss_pred.item())

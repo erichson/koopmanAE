@@ -70,23 +70,13 @@ class Dynamics(nn.Module):
         return mu_p, cholesky_cov
 
 
-class BackDynamics(nn.Module):
-    def __init__(self, b):
-        super(BackDynamics, self).__init__()
-        self.dynamics = nn.Linear(b, b, bias=False)
-
-    def forward(self, x):
-        # 1 to 1 map
-        x = self.dynamics(x)
-        return x
-
-
 class DynamicVAE(nn.Module):
     def __init__(self, m, n, b, steps):
         super(DynamicVAE, self).__init__()
         self.steps = steps
         self.encoder = VEncoderNet(m, n, b)
         self.dynamics = Dynamics(b)
+        self.backdynamics = Dynamics(b)
         self.decoder = VDecoderNet(m, n, b)
 
     def reparametrize(self, mu, logvar):
@@ -98,35 +88,57 @@ class DynamicVAE(nn.Module):
         mu = torch.squeeze(mu)
         eps = torch.randn_like(mu)
         eps = eps.unsqueeze(-1)
+        if len(eps.shape) < 3:
+            eps = eps.unsqueeze(0)
         return mu + torch.bmm(cholesky_cov, eps).squeeze()
 
     def forward(self, y_i):
         out = []
+        out_back = []
         mu_i, logvar_i = self.encoder.forward(y_i)
         x_i = self.reparametrize(mu_i, logvar_i)
         dynamic_ip = self.dynamics.forward(x_i)
         q_mu = mu_i.contiguous()
         q_logvar = logvar_i.contiguous()
-        q_var_i = torch.exp(0.5*q_logvar)
+        q_var_i = torch.exp(q_logvar)
         for i in range(self.steps):
             q_mu, q_var = self.dynamics.forward_dist(q_mu, q_var_i, i+1)
+            q_mu_back, q_var_back = self.backdynamics.forward_dist(q_mu, q_var, i+1)
             x = self.reparametrize_multidim(q_mu, q_var)
+            x_back = self.reparametrize_multidim(q_mu_back, q_var_back)
             out.append(self.decoder.forward(x))
+            out_back.append(self.decoder.forward(x_back))
         out.append(self.decoder.forward(x_i))
-        return out, mu_i, logvar_i, dynamic_ip, x_i
+        out_back.append(self.decoder.forward(x_i))
+        return out, mu_i, logvar_i, dynamic_ip, x_i, out_back
 
-    def loss_function(self, reconstruction_y_i, y_i, mu_i, mu_ip, logvar_i, logvar_ip, first_step=False):
+    def loss_function(self, reconstruction_y_i, y_i, mu_i, mu_ip, logvar_i, logvar_ip, backward=False):
+        if backward: dynamics = self.backdynamics
+        else: dynamics = self.dynamics
+
         mse = torch.nn.functional.mse_loss(reconstruction_y_i, y_i)
         entropy = 0.5 * torch.mean(logvar_i)
-        dynamic_mse = torch.nn.functional.mse_loss(mu_ip, self.dynamics.forward(mu_i))
+        dynamic_mse = torch.nn.functional.mse_loss(mu_ip, dynamics.forward(mu_i))
         dynamic_entropy = torch.mean(logvar_ip.exp()) + \
-                          torch.mean(logvar_i.exp() * torch.diag(self.dynamics.dynamics.weight).pow(2))
-        if first_step:
-            logvar_ip = logvar_i
-            mu_ip = mu_i
-            mu_i = torch.zeros_like(mu_ip)
-            logvar_i = torch.zeros_like(logvar_ip)
-            dynamic_loss = torch.nn.functional.mse_loss(mu_ip, self.dynamics.forward(mu_i)) + \
-                           torch.mean(torch.exp(logvar_ip)) + \
-                           torch.mean(torch.exp(logvar_i) * torch.diag(self.dynamics.dynamics.weight).pow(2))
+                          torch.mean(logvar_i.exp() * torch.diag(dynamics.dynamics.weight).pow(2))
+
         return mse, entropy, dynamic_mse, dynamic_entropy
+
+    def loss_function_multistep(self, data_list, reconstruction_y_i, backward=False):
+        mse = 0
+        entropy = 0
+        dynamic_mse = 0
+        dynamic_entropy = 0
+        for k in range(len(data_list) - 1):
+            _, mu_i, logvar_i, dinamyc_ip, x_i, _ = self.forward(data_list[k])
+            _, mu_ip, logvar_ip, dinamyc_ipp, x_ip, _ = self.forward(data_list[k + 1])
+            mse_k, entropy_k, dynamic_mse_k, dynamic_entropy_k = self.loss_function(reconstruction_y_i[k],
+                                                                                    data_list[k + 1], mu_i, mu_ip,
+                                                                                    logvar_i, logvar_ip, backward)
+            mse += mse_k
+            entropy += entropy_k/data_list[0].shape[0]
+            dynamic_mse += dynamic_mse_k
+            dynamic_entropy += dynamic_entropy_k
+
+        loss_identity = torch.nn.functional.mse_loss(reconstruction_y_i[len(data_list) - 1], data_list[0])
+        return mse, entropy, dynamic_mse, dynamic_entropy, loss_identity
