@@ -85,7 +85,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
                     model.module.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i, backward=True)
 
                 #loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b) + lamb * loss_identity_b) * 1e-7
-                loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b)) * 1e-9
+                loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b)) * 1e-4
 
     
                 # AB = I and BA = I
@@ -95,7 +95,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
                 BA = torch.mm(B, A)
                 I = torch.eye(AB.shape[0]).float().to(device)
                 
-                loss_consist = 1e-9 * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
+                loss_consist = 1e-4 * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
                 loss += loss_consist
 
 

@@ -97,7 +97,7 @@ class DynamicVAE(nn.Module):
         self.steps = steps
         self.encoder = VEncoderNet(m, n, b)
         self.dynamics = Dynamics(b)
-        self.backdynamics = Dynamics(b)
+        self.backdynamics = BackDynamics(b)
         self.decoder = VDecoderNet(m, n, b)
 
     def reparametrize(self, mu, logvar):

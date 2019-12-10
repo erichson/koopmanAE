@@ -79,7 +79,7 @@ parser.add_argument('--plotting', type=bool, default=True, metavar='N', help='nu
 #
 parser.add_argument('--folder', type=str, default='results_back', help='specify directory to print results to')
 #
-parser.add_argument('--lamb', type=float, default='2', help='PCL penalty lambda hyperparameter')
+parser.add_argument('--lamb', type=float, default='4', help='PCL penalty lambda hyperparameter')
 #
 parser.add_argument('--gamma', type=float, default='0', help='Depricated')
 #
