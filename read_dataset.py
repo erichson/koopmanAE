@@ -46,7 +46,7 @@ def harmonic():
     x0 = np.array([0,1])
 
     for i in np.arange(0.0, 1000, 0.5):
-        X.append(F(0.1,i).dot(x0) + np.random.standard_normal(2) * 0.0 )
+        X.append(F(0.1,i).dot(x0) + np.random.standard_normal(2) * 0.001 )
         
     X = np.asarray(X)
     
