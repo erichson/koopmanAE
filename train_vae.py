@@ -87,7 +87,6 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             loss.backward()
             optimizer.step()
             #TODO: regularization wit gaussian prior once per epoch
-            #TODO: confidence interval
 
             # schedule learning rate decay
         exp_lr_scheduler(optimizer, epoch, lr_decay_rate=learning_rate_change, decayEpoch=epoch_update)
