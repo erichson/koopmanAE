@@ -65,7 +65,7 @@ parser.add_argument('--model', type=str, default='net', metavar='N', help='Model
 #
 parser.add_argument('--dataset', type=str, default='harmonic', metavar='N', help='dataset')
 #
-parser.add_argument('--lr', type=float, default=1e-1, metavar='N', help='learning rate (default: 0.01)')
+parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learning rate (default: 0.01)')
 #
 parser.add_argument('--wd', type=float, default=0.0, metavar='N', help='weight_decay (default: 1e-5)')
 #
@@ -77,13 +77,13 @@ parser.add_argument('--batch_test', type=int, default=50, metavar='N', help='bat
 #
 parser.add_argument('--plotting', type=bool, default=True, metavar='N', help='number of epochs to train (default: 10)')
 #
-parser.add_argument('--folder', type=str, default='results', help='specify directory to print results to')
+parser.add_argument('--folder', type=str, default='results_back', help='specify directory to print results to')
 #
-parser.add_argument('--lamb', type=float, default='1', help='PCL penalty lambda hyperparameter')
+parser.add_argument('--lamb', type=float, default='4', help='PCL penalty lambda hyperparameter')
 #
 parser.add_argument('--gamma', type=float, default='0', help='Depricated')
 #
-parser.add_argument('--steps', type=int, default='4', help='steps for omega')
+parser.add_argument('--steps', type=int, default='3', help='steps for omega')
 #
 parser.add_argument('--bottleneck', type=int, default='2', help='bottleneck')
 #

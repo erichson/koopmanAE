@@ -63,7 +63,7 @@ parser.add_argument('--model', type=str, default='net', metavar='N', help='Model
 #
 parser.add_argument('--dataset', type=str, default='harmonic', metavar='N', help='dataset')
 #
-parser.add_argument('--lr', type=float, default=1e-1, metavar='N', help='learning rate (default: 0.01)')
+parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learning rate (default: 0.01)')
 #
 parser.add_argument('--wd', type=float, default=0.0, metavar='N', help='weight_decay (default: 1e-5)')
 #
@@ -77,15 +77,15 @@ parser.add_argument('--plotting', type=bool, default=True, metavar='N', help='nu
 #
 parser.add_argument('--folder', type=str, default='results_det',  help='specify directory to print results to')
 #
-parser.add_argument('--lamb', type=float, default='1',  help='PCL penalty lambda hyperparameter')
+parser.add_argument('--lamb', type=float, default='4',  help='PCL penalty lambda hyperparameter')
 #
 parser.add_argument('--gamma', type=float, default='0',  help='Depricated')
 #
-parser.add_argument('--steps', type=int, default='4',  help='steps for omega')
+parser.add_argument('--steps', type=int, default='3',  help='steps for omega')
 #
 parser.add_argument('--bottleneck', type=int, default='2',  help='bottleneck')
 #
-parser.add_argument('--lr_update', type=int, nargs='+', default=[100, 300, 400], help='Decrease learning rate at these epochs.')
+parser.add_argument('--lr_update', type=int, nargs='+', default=[100, 300, 500], help='Decrease learning rate at these epochs.')
 #
 parser.add_argument('--lr_decay', type=float, default='0.2',  help='PCL penalty lambda hyperparameter')
 #
