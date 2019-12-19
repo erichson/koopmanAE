@@ -85,7 +85,7 @@ parser.add_argument('--gamma', type=float, default='0', help='Depricated')
 #
 parser.add_argument('--steps', type=int, default='3', help='steps for omega')
 #
-parser.add_argument('--bottleneck', type=int, default='2', help='bottleneck')
+parser.add_argument('--bottleneck', type=int, default='6', help='bottleneck')
 #
 parser.add_argument('--lr_update', type=int, nargs='+', default=[100, 300, 500],
                     help='Decrease learning rate at these epochs.')
