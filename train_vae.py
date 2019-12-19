@@ -68,9 +68,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             model.train()
             beta = 0.0001
             gamma = 0.0001
-            #for d in data_list: 
-            #    d.to(device)
-                
+
             data_list = [d.to(device) for d in data_list]    
 
             reconstruction_y_i, _, _, _, _, _ = model(data_list[0])
@@ -82,7 +80,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             if backward:
                 _, _, _, _, _, reconstruction_y_i_back = model(data_list[-1])
                 mse_b, entropy_b, dynamic_mse_b, dynamic_entropy_b, loss_identity_b = \
-                    model.module.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i, backward=True)
+                    model.module.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i_back, backward=True)
 
                 #loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b) + lamb * loss_identity_b) * 1e-7
                 loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b)) * 1e-4
@@ -104,9 +102,6 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             loss.backward()
             optimizer.step()
             #TODO: regularization wit gaussian prior once per epoch
-            #TODO: confidence interval
-            
-            
 
         # schedule learning rate decay
         exp_lr_scheduler(optimizer, epoch, lr_decay_rate=learning_rate_change, decayEpoch=epoch_update)
