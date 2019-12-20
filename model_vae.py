@@ -113,7 +113,7 @@ class DynamicVAE(nn.Module):
             eps = eps.unsqueeze(0)
         return mu + torch.bmm(cholesky_cov, eps).squeeze()
 
-    def forward(self, y_i):
+    def forward(self, y_i, mode='forward'):
         out = []
         out_back = []
         mu_i, logvar_i = self.encoder.forward(y_i)
@@ -123,18 +123,23 @@ class DynamicVAE(nn.Module):
         q_logvar = logvar_i.contiguous()
         q_var_i = torch.exp(q_logvar)
         
-        for i in range(self.steps):
-            q_mu, q_var = self.dynamics.forward_dist(q_mu, q_var_i, i+1)
-            q_mu_back, q_var_back = self.backdynamics.forward_dist(q_mu, q_var_i, i+1)
-            x = self.reparametrize_multidim(q_mu, q_var)
-            x_back = self.reparametrize_multidim(q_mu_back, q_var_back)
-            out.append(self.decoder.forward(x))
-            out_back.append(self.decoder.forward(x_back))
-        
-        out.append(self.decoder.forward(x_i))
-        out_back.append(self.decoder.forward(x_i))
-        return out, mu_i, logvar_i, dynamic_ip, x_i, out_back
+        if mode == 'forward':
+            for i in range(self.steps):
+                q_mu, q_var = self.dynamics.forward_dist(q_mu, q_var_i, i+1)
+                x = self.reparametrize_multidim(q_mu, q_var)
+                out.append(self.decoder.forward(x))
+            out.append(self.decoder.forward(x_i))
+            return out, mu_i, logvar_i, dynamic_ip, x_i, None
 
+        if mode == 'backward':
+        
+            for i in range(self.steps):
+                q_mu, q_var = self.backdynamics.forward_dist(q_mu, q_var_i, i+1)
+                x = self.reparametrize_multidim(q_mu, q_var)
+                out_back.append(self.decoder.forward(x))
+            
+            out_back.append(self.decoder.forward(x_i))
+            return None, mu_i, logvar_i, dynamic_ip, x_i, out_back
 
     def loss_function(self, reconstruction_y_i, y_i, mu_i, mu_ip, logvar_i, logvar_ip, backward=False):
         if backward: 
