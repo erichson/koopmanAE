@@ -120,11 +120,8 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             epoch_hist.append(epoch + 1)
 
             w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
-            if gamma > 0:
-                # print(wP)
-                print(np.abs(w))
+            print(np.abs(w))
 
-            # print(w)
     plt.figure()
     plt.plot(epoch_loss[1:], loss_hist[1:])
     plt.yscale('log')

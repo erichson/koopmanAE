@@ -293,54 +293,54 @@ plt.close()
 
 np.save(args.folder + '/000_pred.npy', error)
 
-# ******************************************************************************
-# Empedding
-# ******************************************************************************
-Xinput, Xtarget = Xtest[:-1], Xtest[1:]
-
-emb = []
-mu_emb = []
-var_emb = []
-
-mu, logvar = model.encoder(Xinput[0].float().to(device))  # embedd data in latent space
-var = torch.exp(logvar)
-
-for j in range(args.pred_steps):
-    mu, cholesk_dec = model.dynamics.forward_dist(mu, var, j + 1)
-    cholesk_dec = cholesk_dec.unsqueeze(0)
-    z = model.reparametrize_multidim(mu, cholesk_dec)
-    emb.append(z.data.cpu().numpy().reshape(args.bottleneck))
-    mu_emb.append(mu.data.cpu().numpy().reshape(args.bottleneck))
-    cholesk_dec_numpy = cholesk_dec.data.cpu().numpy().reshape((args.bottleneck, args.bottleneck))
-    var_emb.append(np.matmul(cholesk_dec_numpy, cholesk_dec_numpy.T))
-
-emb = np.asarray(emb)
-mu_emb = np.asarray(mu_emb)
-var_emb = np.asarray(var_emb)
-fig = plt.figure(figsize=(15, 15))
-ax = fig.add_subplot(111)
-plt.plot(emb[:, 0], emb[:, 1], '-', lw=1, label='', color='#377eb8')
-plt.plot(mu_emb[:, 0], mu_emb[:, 1], '-', lw=1, label='', color='#377eb8')
-for mu_i, cov_i in zip(mu_emb, var_emb):
-    confidence_ellipse(mu_i, cov_i, ax, n_std=3, alpha=0.2, facecolor='blue')
-plt.xlim(-1.6, 1.6)
-plt.ylim(-1.6, 1.6)
-
-plt.tick_params(axis='x', labelsize=22)
-plt.tick_params(axis='y', labelsize=22)
-plt.locator_params(axis='y', nbins=10)
-plt.locator_params(axis='x', nbins=10)
-
-plt.ylabel('y', fontsize=22)
-plt.xlabel('x', fontsize=22)
-plt.grid(False)
-# plt.yscale("log")
-# plt.legend(fontsize=22)
-fig.tight_layout()
-plt.savefig(args.folder + '/embedding' + '.png')
-# plt.savefig(args.folder +'/000prediction' +'.eps')
-
-plt.close()
+## ******************************************************************************
+## Empedding
+## ******************************************************************************
+#Xinput, Xtarget = Xtest[:-1], Xtest[1:]
+#
+#emb = []
+#mu_emb = []
+#var_emb = []
+#
+#mu, logvar = model.encoder(Xinput[0].float().to(device))  # embedd data in latent space
+#var = torch.exp(logvar)
+#
+#for j in range(args.pred_steps):
+#    mu, cholesk_dec = model.dynamics.forward_dist(mu, var, j + 1)
+#    cholesk_dec = cholesk_dec.unsqueeze(0)
+#    z = model.reparametrize_multidim(mu, cholesk_dec)
+#    emb.append(z.data.cpu().numpy().reshape(args.bottleneck))
+#    mu_emb.append(mu.data.cpu().numpy().reshape(args.bottleneck))
+#    cholesk_dec_numpy = cholesk_dec.data.cpu().numpy().reshape((args.bottleneck, args.bottleneck))
+#    var_emb.append(np.matmul(cholesk_dec_numpy, cholesk_dec_numpy.T))
+#
+#emb = np.asarray(emb)
+#mu_emb = np.asarray(mu_emb)
+#var_emb = np.asarray(var_emb)
+#fig = plt.figure(figsize=(15, 15))
+#ax = fig.add_subplot(111)
+#plt.plot(emb[:, 0], emb[:, 1], '-', lw=1, label='', color='#377eb8')
+#plt.plot(mu_emb[:, 0], mu_emb[:, 1], '-', lw=1, label='', color='#377eb8')
+#for mu_i, cov_i in zip(mu_emb, var_emb):
+#    confidence_ellipse(mu_i, cov_i, ax, n_std=3, alpha=0.2, facecolor='blue')
+#plt.xlim(-1.6, 1.6)
+#plt.ylim(-1.6, 1.6)
+#
+#plt.tick_params(axis='x', labelsize=22)
+#plt.tick_params(axis='y', labelsize=22)
+#plt.locator_params(axis='y', nbins=10)
+#plt.locator_params(axis='x', nbins=10)
+#
+#plt.ylabel('y', fontsize=22)
+#plt.xlabel('x', fontsize=22)
+#plt.grid(False)
+## plt.yscale("log")
+## plt.legend(fontsize=22)
+#fig.tight_layout()
+#plt.savefig(args.folder + '/embedding' + '.png')
+## plt.savefig(args.folder +'/000prediction' +'.eps')
+#
+#plt.close()
 
 # ******************************************************************************
 # Eigenvalues
