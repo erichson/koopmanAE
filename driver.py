@@ -268,12 +268,12 @@ error = []
 for i in range(30):
             error_temp = []
             
-            z = model.module.encoder(Xinput[i].float().to(device)) # embedd data in latent space
+            z = model.encoder(Xinput[i].float().to(device)) # embedd data in latent space
 
 
             for j in range(args.pred_steps):
-                z = model.module.dynamics(z) # evolve system in time
-                x_pred = model.module.decoder(z) # map back to high-dimensional space
+                z = model.dynamics(z) # evolve system in time
+                x_pred = model.decoder(z) # map back to high-dimensional space
                 target_temp = Xtarget[i+j].data.cpu().numpy().reshape(m,n)
                 error_temp.append(np.linalg.norm(x_pred.data.cpu().numpy().reshape(m,n) - target_temp) / np.linalg.norm(target_temp))
 
@@ -315,10 +315,10 @@ Xinput, Xtarget = Xtest[:-1], Xtest[1:]
 
 emb = []
             
-z = model.module.encoder(Xinput[i].float().to(device)) # embedd data in latent space
+z = model.encoder(Xinput[i].float().to(device)) # embedd data in latent space
 
 for j in range(args.pred_steps):
-    z = model.module.dynamics(z) # evolve system in time
+    z = model.dynamics(z) # evolve system in time
     emb.append(z.data.cpu().numpy().reshape(args.bottleneck))              
 
 emb = np.asarray(emb)
@@ -352,7 +352,7 @@ plt.close()
 # Eigenvalues
 #******************************************************************************
 model.eval()
-A =  model.module.dynamics.dynamics.weight.cpu().data.numpy()
+A =  model.dynamics.dynamics.weight.cpu().data.numpy()
 #A =  model.module.test.data.cpu().data.numpy()
 w, v = np.linalg.eig(A)
 print(np.abs(w))

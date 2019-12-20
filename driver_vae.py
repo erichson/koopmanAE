@@ -255,13 +255,13 @@ error = []
 for i in range(30):
     error_temp = []
 
-    mu, logvar = model.module.encoder(Xinput[i].float().to(device))  # embedd data in latent space
+    mu, logvar = model.encoder(Xinput[i].float().to(device))  # embedd data in latent space
     var = torch.exp(logvar)
     for j in range(args.pred_steps):
-        mu, cholesk_dec = model.module.dynamics.forward_dist(mu, var, j + 1)
+        mu, cholesk_dec = model.dynamics.forward_dist(mu, var, j + 1)
         cholesk_dec = cholesk_dec.unsqueeze(0)
-        z = model.module.reparametrize_multidim(mu, cholesk_dec)
-        x_pred = model.module.decoder.forward(z)
+        z = model.reparametrize_multidim(mu, cholesk_dec)
+        x_pred = model.decoder.forward(z)
         target_temp = Xtarget[i + j].data.cpu().numpy().reshape(m, n)
         error_temp.append(
             np.linalg.norm(x_pred.data.cpu().numpy().reshape(m, n) - target_temp) / np.linalg.norm(target_temp))
@@ -302,13 +302,13 @@ emb = []
 mu_emb = []
 var_emb = []
 
-mu, logvar = model.module.encoder(Xinput[0].float().to(device))  # embedd data in latent space
+mu, logvar = model.encoder(Xinput[0].float().to(device))  # embedd data in latent space
 var = torch.exp(logvar)
 
 for j in range(args.pred_steps):
-    mu, cholesk_dec = model.module.dynamics.forward_dist(mu, var, j + 1)
+    mu, cholesk_dec = model.dynamics.forward_dist(mu, var, j + 1)
     cholesk_dec = cholesk_dec.unsqueeze(0)
-    z = model.module.reparametrize_multidim(mu, cholesk_dec)
+    z = model.reparametrize_multidim(mu, cholesk_dec)
     emb.append(z.data.cpu().numpy().reshape(args.bottleneck))
     mu_emb.append(mu.data.cpu().numpy().reshape(args.bottleneck))
     cholesk_dec_numpy = cholesk_dec.data.cpu().numpy().reshape((args.bottleneck, args.bottleneck))
@@ -346,7 +346,7 @@ plt.close()
 # Eigenvalues
 # ******************************************************************************
 model.eval()
-A = model.module.dynamics.dynamics.weight.cpu().data.numpy()
+A = model.dynamics.dynamics.weight.cpu().data.numpy()
 # A =  model.module.test.data.cpu().data.numpy()
 w, v = np.linalg.eig(A)
 print(np.abs(w))
