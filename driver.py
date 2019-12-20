@@ -183,7 +183,8 @@ if(args.model == 'net'):
 #    model.apply(weights_init)
 #    print('big')
 
-model = torch.nn.DataParallel(model)
+#model = torch.nn.DataParallel(model)
+model = model.to(device)
 
 
 #==============================================================================

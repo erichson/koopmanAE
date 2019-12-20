@@ -150,11 +150,11 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                 print("loss prediction: ", loss_pred.item())
                 print("loss sum: ", loss.item())
 
-                error_train.append(error_summary(train_loader, model.eval(), 'train'))
-                error_test.append(error_summary(test_loader, model.eval(), 'test'))
+                error_train.append(error_summary(train_loader, model.eval(), 'train', device))
+                error_test.append(error_summary(test_loader, model.eval(), 'test', device))
                 epoch_hist.append(epoch+1) 
 
-                w, _ = np.linalg.eig(model.module.dynamics.dynamics.weight.data.cpu().numpy())
+                w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
                 if gamma > 0:
                     #print(wP)
                     print(np.abs(w))

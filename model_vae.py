@@ -97,7 +97,7 @@ class DynamicVAE(nn.Module):
         self.steps = steps
         self.encoder = VEncoderNet(m, n, b)
         self.dynamics = Dynamics(b)
-        self.backdynamics = BackDynamics(b)
+        self.backdynamics = Dynamics(b)
         self.decoder = VDecoderNet(m, n, b)
 
     def reparametrize(self, mu, logvar):
@@ -119,13 +119,13 @@ class DynamicVAE(nn.Module):
         mu_i, logvar_i = self.encoder.forward(y_i)
         x_i = self.reparametrize(mu_i, logvar_i)
         dynamic_ip = self.dynamics.forward(x_i)
-        q_mu = mu_i.contiguous()
+        q_mu_input = mu_i.contiguous()
         q_logvar = logvar_i.contiguous()
         q_var_i = torch.exp(q_logvar)
         
         for i in range(self.steps):
-            q_mu, q_var = self.dynamics.forward_dist(q_mu, q_var_i, i+1)
-            q_mu_back, q_var_back = self.backdynamics.forward_dist(q_mu, q_var, i+1)
+            q_mu, q_var = self.dynamics.forward_dist(q_mu_input, q_var_i, i+1)
+            q_mu_back, q_var_back = self.backdynamics.forward_dist(q_mu_input, q_var_i, i+1)
             x = self.reparametrize_multidim(q_mu, q_var)
             x_back = self.reparametrize_multidim(q_mu_back, q_var_back)
             out.append(self.decoder.forward(x))

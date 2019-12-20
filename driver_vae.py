@@ -85,7 +85,7 @@ parser.add_argument('--gamma', type=float, default='0', help='Depricated')
 #
 parser.add_argument('--steps', type=int, default='3', help='steps for omega')
 #
-parser.add_argument('--bottleneck', type=int, default='6', help='bottleneck')
+parser.add_argument('--bottleneck', type=int, default='2', help='bottleneck')
 #
 parser.add_argument('--lr_update', type=int, nargs='+', default=[100, 300, 500],
                     help='Decrease learning rate at these epochs.')
@@ -94,7 +94,7 @@ parser.add_argument('--lr_decay', type=float, default='0.2', help='PCL penalty l
 #
 parser.add_argument('--pred_steps', type=int, default='1000', help='Prediction steps')
 
-parser.add_argument('--backward', type=bool, default=True, help='whether to train also with backward dynamics')
+parser.add_argument('--backward', type=int, default=1, help='whether to train also with backward dynamics')
 #
 parser.add_argument('--seed', type=int, default='1', help='Prediction steps')
 #
@@ -182,7 +182,8 @@ if (args.model == 'net'):
 #    model.apply(weights_init)
 #    print('big')
 
-model = torch.nn.DataParallel(model).to(device)
+#model = torch.nn.DataParallel(model).to(device)
+model = model.to(device)
 
 # ==============================================================================
 # Model summary

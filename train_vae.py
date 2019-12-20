@@ -73,27 +73,27 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
 
             reconstruction_y_i, _, _, _, _, _ = model(data_list[0])
             mse, entropy, dynamic_mse, dynamic_entropy, loss_identity = \
-                model.module.loss_function_multistep(data_list, reconstruction_y_i)
+                model.loss_function_multistep(data_list, reconstruction_y_i)
                 
             loss = mse - gamma * entropy + beta * (dynamic_mse + dynamic_entropy) + lamb * loss_identity
 
-            if backward:
+            if backward == 1:
                 _, _, _, _, _, reconstruction_y_i_back = model(data_list[-1])
                 mse_b, entropy_b, dynamic_mse_b, dynamic_entropy_b, loss_identity_b = \
-                    model.module.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i_back, backward=True)
+                    model.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i_back, backward=True)
 
-                #loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b) + lamb * loss_identity_b) * 1e-7
-                loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b)) * 1e-4
+                #loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b) + lamb * loss_identity_b) * 1e-5
+                loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b)) * 1e-5
 
     
                 # AB = I and BA = I
-                A = model.module.dynamics.dynamics.weight
-                B = model.module.backdynamics.dynamics.weight
+                A = model.dynamics.dynamics.weight
+                B = model.backdynamics.dynamics.weight
                 AB = torch.mm(A, B)
                 BA = torch.mm(B, A)
                 I = torch.eye(AB.shape[0]).float().to(device)
                 
-                loss_consist = 1e-4 * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
+                loss_consist = 1e-5 * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
                 loss += loss_consist
 
 
@@ -115,11 +115,11 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             #print("loss prediction: ", loss_pred.item())
             print("loss sum: ", loss.item())
 
-            error_train.append(error_summary(train_loader, model.eval(), 'train'))
-            error_test.append(error_summary(test_loader, model.eval(), 'test'))
+            error_train.append(error_summary(train_loader, model.eval(), 'train', device))
+            error_test.append(error_summary(test_loader, model.eval(), 'test', device))
             epoch_hist.append(epoch + 1)
 
-            w, _ = np.linalg.eig(model.module.dynamics.dynamics.weight.data.cpu().numpy())
+            w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
             if gamma > 0:
                 # print(wP)
                 print(np.abs(w))
