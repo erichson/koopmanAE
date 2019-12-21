@@ -19,10 +19,10 @@ class FullResBlock(torch.nn.Module):
         residum = x
         x = self.L1(x)
         x = self.act(x)
-        x = self.bn1(x)        
+        #x = self.bn1(x)        
         x = self.L2(x)
         x = self.act(x)
-        x = self.bn2(x) 
+        #x = self.bn2(x) 
         return x+residum
 
 
