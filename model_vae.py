@@ -4,6 +4,28 @@ import torch
 from torch.autograd import Variable, Function
 import math
 
+ALPHA = 2
+
+class FullResBlock(torch.nn.Module):
+    def __init__(self, in_features, out_features, act=torch.nn.functional.tanh):
+        super(FullResBlock,self).__init__()
+        self.act = act
+        
+        self.L1 = nn.Linear(in_features, int(in_features/2))
+        self.bn1 = nn.BatchNorm1d(1)        
+        self.L2 = nn.Linear(int(in_features/2), out_features)
+        self.bn2 = nn.BatchNorm1d(1)
+        
+    def forward(self, x):
+        residum = x
+        x = self.L1(x)
+        x = self.act(x)
+        #x = self.bn1(x)        
+        x = self.L2(x)
+        x = self.act(x)
+        #x = self.bn2(x) 
+        return x+residum
+
 
 class VEncoderNet(nn.Module):
     def __init__(self, m, n, b):
@@ -12,16 +34,21 @@ class VEncoderNet(nn.Module):
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
-        self.fc1 = nn.Linear(self.N, 32)
-        self.fc2 = nn.Linear(32, 8)
-        self.fc3mu = nn.Linear(8, b)
-        self.fc3logvar = nn.Linear(8, b)
+        self.fc1 = nn.Linear(self.N, 32*ALPHA)
+        self.bn = nn.BatchNorm1d(1)
+        
+        self.resblock1 = FullResBlock(32*ALPHA, 32*ALPHA)
+        self.resblock2 = FullResBlock(32*ALPHA, 32*ALPHA)
+        self.fc3mu = nn.Linear(32*ALPHA, b)
+        self.fc3logvar = nn.Linear(32*ALPHA, b)
 
     def forward(self, x):
         x = x.view(-1, 1, self.N)
         x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
-        mu = self.tanh(self.fc3mu(x))
+        #x = self.bn(x)
+        x = self.resblock1(x)     
+        x = self.resblock2(x)
+        mu = self.fc3mu(x)
         logvar = self.fc3logvar(x)
 
         return mu, logvar
@@ -33,19 +60,26 @@ class VDecoderNet(nn.Module):
 
         self.m = m
         self.n = n
-
+        self.b = b
+        
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
-        self.fc1 = nn.Linear(b, 8)
-        self.fc2 = nn.Linear(8, 32)
-        self.fc3 = nn.Linear(32, m * n)
+
+        self.fc1 = nn.Linear(b, 32*ALPHA)
+        self.bn = nn.BatchNorm1d(1)        
+        self.resblock1 = FullResBlock(32*ALPHA, 32*ALPHA)
+        self.resblock2 = FullResBlock(32*ALPHA, 32*ALPHA)
+        self.fc4 = nn.Linear(32*ALPHA, m*n)
 
     def forward(self, x):
-        # x = self.tanh(x)
+        x = x.view(-1, 1, self.b)
+        
         x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
-        x = self.fc3(x)
+        #x = self.bn(x)
+        x = self.resblock1(x)     
+        x = self.resblock2(x)
+        x = self.fc4(x)
         x = x.view(-1, 1, self.m, self.n)
         return x
 
