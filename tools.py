@@ -61,31 +61,6 @@ def weights_init(m):
 
 
 
-def error_summary(data_loader, model, train_or_test='training', device='cpu'):
-        from torch.autograd import Variable, Function
-        from torch.utils.data import DataLoader, Dataset
-
-
-        error = []
-        # ===================compute relative error train========================
-        for batch_idx, data_list in enumerate(data_loader):
-
-            # Relative Error
-            out = model(data_list[0].to(device))[0]
-
-            output = out[0].cpu().data.numpy().reshape(out[0].shape[0], -1)
-            target = data_list[0].cpu().data.numpy().reshape(data_list[0].shape[0], -1)
-            error.append(np.linalg.norm(target - output) / np.linalg.norm(target))
-
-
-        string_output =  train_or_test + ' :'
-        print(string_output, ' error: ', np.mean(error))
-
-        return np.mean(error)
-
-
-
-
 def plot_flow_prediction(input, target, prediction, m, n, dataset):
     import cmocean
 

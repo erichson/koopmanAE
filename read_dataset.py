@@ -13,8 +13,10 @@ def data_from_name(name):
         return harmonic()
     if name == 'pendulum':
         return pendulum()    
-   
-
+    if name == 'flow':
+        return flow_cylinder()
+    if name == 'flow_noisy':
+        return flow_cylinder_noisy()   
     else:
         raise ValueError('dataset {} not recognized'.format(name))
 
@@ -73,39 +75,6 @@ def harmonic():
 def pendulum():
     
     np.random.seed(1234567899)
-    
-#    # initialize vectors
-#    time_vec = []
-#    theta_vec = []
-#    omega_vec = []
-#        
-#    
-#    theta_init = 1
-#    omega_init = 0
-#    tau = 0.1
-#    l=1
-#    g=1
-#    numSteps = 2000
-#    
-#    # begin time-stepping
-#    omega, theta =  omega_init, theta_init
-#    for i in range(0,numSteps):
-#        omega_old = omega
-#        theta_old = theta
-#        
-#        # update the values
-#        omega = omega_old - (g/l)*np.sin(theta_old)*tau
-#        theta = theta_old + omega*tau
-#        
-#        # record the values
-#        time_vec.append(tau*i)
-#        theta_vec.append(theta)
-#        omega_vec.append(omega)
-        
-    #X = np.concatenate((np.asarray(theta_vec).reshape(1,numSteps),np.asarray(omega_vec).reshape(1,numSteps)),axis=0)
-    #X += np.random.standard_normal(X.shape) * 0.0
-  
-    
 
     def sol(t,theta0):
         S = np.sin(0.5*(theta0) )
@@ -146,10 +115,6 @@ def pendulum():
     #plt.savefig(args.folder +'/000prediction' +'.eps')
     
     
-    
-    
-    
-    
     # Rotate to high-dimensional space
     Q = np.random.standard_normal((144,2))
     Q,_ = np.linalg.qr(Q)
@@ -167,3 +132,70 @@ def pendulum():
     # Return train and test set
     #******************************************************************************
     return X, X_test, 144, 1
+
+
+
+def flow_cylinder():
+    X = np.load('data/flow_cylinder.npy')
+    print(X.shape)
+    
+    # Split into train and test set
+    X = X[:, 65:, :]
+    X = X[:, ::6, ::3]
+    X = X[:, 0:64, 0:64]
+
+    t, m, n = X.shape
+ 
+    # mean subtract
+    X = X.reshape(-1,m*m)
+    X -= X.mean(axis=0)        
+    
+    # scale 
+    X = X.reshape(-1,m*m)
+    X = 2 * (X - np.min(X)) / np.ptp(X) - 1
+    X = X.reshape(-1,m,m)    
+    
+    # split into train and test set
+    
+    X = X[0:151]   
+    X_test = X[0:151]
+    
+    
+    #******************************************************************************
+    # Return train and test set
+    #******************************************************************************
+    return X, X_test, m, n
+
+
+  
+def flow_cylinder_noisy():
+    X = np.load('data/flow_cylinder.npy')
+    print(X.shape)
+    
+    # Split into train and test set
+    X = X[:, 65:, :]
+    X = X[:, ::6, ::3]
+    X = X[:, 0:64, 0:64]
+
+    t, m, n = X.shape
+ 
+    signal = np.var(X)
+    noise = signal / 120
+    X = X + np.random.normal(0, noise**0.5, X.shape) * 1.0
+
+    
+    # scale 
+    X = X.reshape(-1,m*m)
+    X = 2 * (X - np.min(X)) / np.ptp(X) - 1
+    X = X.reshape(-1,m,m) 
+    
+    # split into train and test set
+    
+    X_test = X[100:]
+    X = X[:100]    
+    
+    
+    #******************************************************************************
+    # Return train and test set
+    #******************************************************************************
+    return X, X_test, m, n
