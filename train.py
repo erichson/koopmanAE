@@ -75,9 +75,7 @@ def train(model, train_loader, test_loader, lr, weight_decay,
     #criterion2 = nn.L1Loss().cuda()
 
 
-    error_train = []    
-    error_test  = []
-    epoch_hist = []
+
     epoch_hist = []
     loss_hist = []
     epoch_loss = []
@@ -150,8 +148,6 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                 print("loss prediction: ", loss_pred.item())
                 print("loss sum: ", loss.item())
 
-                error_train.append(error_summary(train_loader, model.eval(), 'train', device))
-                error_test.append(error_summary(test_loader, model.eval(), 'test', device))
                 epoch_hist.append(epoch+1) 
 
                 w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
@@ -168,4 +164,4 @@ def train(model, train_loader, test_loader, lr, weight_decay,
 
                 
                 
-    return model, optimizer, error_train, error_test, epoch_hist
+    return model, optimizer, epoch_hist

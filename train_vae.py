@@ -20,7 +20,7 @@ from Adam_new import *
 
 
 def train_vae(model, train_loader, test_loader, lr, weight_decay,
-          lamb, num_epochs, learning_rate_change, epoch_update, gamma=0.0, backward=False):
+          lamb, num_epochs, learning_rate_change, epoch_update, eta=0.0, backward=False):
     # optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=weight_decay)
 
     device = get_device()
@@ -54,9 +54,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
 
     #criterion = nn.MSELoss()#.cuda()
 
-    error_train = []
-    error_test = []
-    epoch_hist = []
+
     epoch_hist = []
     loss_hist = []
     epoch_loss = []
@@ -93,7 +91,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
                 BA = torch.mm(B, A)
                 I = torch.eye(AB.shape[0]).float().to(device)
                 
-                loss_consist = 1e-4 * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
+                loss_consist = eta * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
                 loss += loss_consist
 
 
@@ -115,10 +113,6 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             #print("loss prediction: ", loss_pred.item())
             print("loss sum: ", loss.item())
 
-            error_train.append(error_summary(train_loader, model.eval(), 'train', device))
-            error_test.append(error_summary(test_loader, model.eval(), 'test', device))
-            epoch_hist.append(epoch + 1)
-
             w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
             print(np.abs(w))
 
@@ -128,4 +122,4 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
     plt.savefig('loss' + '.png')
     plt.close()
 
-    return model, optimizer, error_train, error_test, epoch_hist
+    return model, optimizer, epoch_hist
