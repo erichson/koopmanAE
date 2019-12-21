@@ -69,7 +69,7 @@ parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learnin
 #
 parser.add_argument('--wd', type=float, default=0.0, metavar='N', help='weight_decay (default: 1e-5)')
 #
-parser.add_argument('--epochs', type=int, default=600, metavar='N', help='number of epochs to train (default: 10)')
+parser.add_argument('--epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 10)')
 #
 parser.add_argument('--batch', type=int, default=64, metavar='N', help='batch size (default: 10000)')
 #
@@ -81,7 +81,7 @@ parser.add_argument('--folder', type=str, default='results_back', help='specify 
 #
 parser.add_argument('--lamb', type=float, default='4', help='PCL penalty lambda hyperparameter')
 #
-parser.add_argument('--gamma', type=float, default='0', help='Depricated')
+parser.add_argument('--eta', type=float, default='1e-3', help='Depricated')
 #
 parser.add_argument('--steps', type=int, default='3', help='steps for omega')
 #
@@ -196,12 +196,12 @@ print(model)
 # ==============================================================================
 # Start training
 # ==============================================================================
-model, optimizer, error_train, error_test, epoch_hist = train_vae(model, train_loader, test_loader,
+model, optimizer, epoch_hist = train_vae(model, train_loader, test_loader,
                                                               lr=args.lr, weight_decay=args.wd, lamb=args.lamb,
                                                               num_epochs=args.epochs,
                                                               learning_rate_change=args.lr_decay,
                                                               epoch_update=args.lr_update,
-                                                              gamma=args.gamma, backward=args.backward)
+                                                              eta=args.eta, backward=args.backward)
 
 
 
@@ -213,38 +213,6 @@ for param_group in optimizer.param_groups:
     print(param_group['weight_decay'])
     print(param_group['weight_decay_adapt'])
 
-error_train = np.asarray(error_train)
-error_test = np.asarray(error_test)
-epoch_hist = np.asarray(epoch_hist)
-np.save(args.folder + '/000_error_train.npy', error_train)
-np.save(args.folder + '/000_error_test.npy', error_test)
-np.save(args.folder + '/000_epoch_hist.npy', epoch_hist)
-
-# ******************************************************************************
-# Error plots
-# ******************************************************************************
-if (args.plotting == True):
-    fig = plt.figure(figsize=(15, 12))
-    plt.plot(epoch_hist[:], error_train[:], lw=3, label='Train error', color='#377eb8', )
-    plt.plot(epoch_hist[:], error_test[:], lw=3, label='Test error', color='#e41a1c', )
-
-    plt.tick_params(axis='x', labelsize=22)
-    plt.tick_params(axis='y', labelsize=22)
-    plt.locator_params(axis='y', nbins=10)
-    plt.locator_params(axis='x', nbins=10)
-
-    plt.ylabel('Type II Error', fontsize=22)
-    plt.xlabel('Epochs', fontsize=22)
-    plt.grid(False)
-    plt.yscale("log")
-    # ax[0].set_ylim([0.01,1])
-    plt.legend(fontsize=22)
-    fig.tight_layout()
-    plt.show()
-    plt.savefig(args.folder + '/train_test_error' + '.png')
-    # plt.savefig(args.folder +'/train_test_error' +'.eps')
-
-    plt.close()
 
 # ******************************************************************************
 # Prediction

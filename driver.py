@@ -67,7 +67,7 @@ parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learnin
 #
 parser.add_argument('--wd', type=float, default=0.0, metavar='N', help='weight_decay (default: 1e-5)')
 #
-parser.add_argument('--epochs', type=int, default=600, metavar='N', help='number of epochs to train (default: 10)')
+parser.add_argument('--epochs', type=int, default=1, metavar='N', help='number of epochs to train (default: 10)')
 #
 parser.add_argument('--batch', type=int, default=64, metavar='N', help='batch size (default: 10000)')
 #
@@ -199,7 +199,7 @@ print(model)
 #==============================================================================
 # Start training
 #==============================================================================
-model, optimizer, error_train, error_test, epoch_hist = train(model, train_loader, test_loader,
+model, optimizer, epoch_hist = train(model, train_loader, test_loader,
                     lr=args.lr, weight_decay=args.wd, lamb=args.lamb, num_epochs = args.epochs,
                     learning_rate_change=args.lr_decay, epoch_update=args.lr_update,
                     gamma = args.gamma)
@@ -213,45 +213,6 @@ torch.save(model.state_dict(), args.folder + '/model'+'.pkl')
 for param_group in optimizer.param_groups:
     print(param_group['weight_decay'])
     print(param_group['weight_decay_adapt'])
-
-error_train = np.asarray(error_train)
-error_test = np.asarray(error_test)
-epoch_hist = np.asarray(epoch_hist)
-np.save(args.folder +'/000_error_train.npy', error_train)
-np.save(args.folder +'/000_error_test.npy', error_test)
-np.save(args.folder +'/000_epoch_hist.npy', epoch_hist)
-
-
-
-
-#******************************************************************************
-# Error plots
-#******************************************************************************
-if(args.plotting == True):
-        fig = plt.figure(figsize=(15,12))
-        plt.plot(epoch_hist[:], error_train[:], lw=3, label='Train error', color='#377eb8',)
-        plt.plot(epoch_hist[:], error_test[:], lw=3, label='Test error', color='#e41a1c',)
-
-
-        plt.tick_params(axis='x', labelsize=22)
-        plt.tick_params(axis='y', labelsize=22)
-        plt.locator_params(axis='y', nbins=10)
-        plt.locator_params(axis='x', nbins=10)
-
-        plt.ylabel('Type II Error', fontsize=22)
-        plt.xlabel('Epochs', fontsize=22)
-        plt.grid(False)
-        plt.yscale("log")
-        #ax[0].set_ylim([0.01,1])
-        plt.legend(fontsize=22)
-        fig.tight_layout()
-        plt.show()
-        plt.savefig(args.folder +'/train_test_error' +'.png')
-        #plt.savefig(args.folder +'/train_test_error' +'.eps')
-
-        plt.close()
-
-
 
 
 
@@ -315,7 +276,7 @@ Xinput, Xtarget = Xtest[:-1], Xtest[1:]
 
 emb = []
             
-z = model.encoder(Xinput[i].float().to(device)) # embedd data in latent space
+z = model.encoder(Xinput[0].float().to(device)) # embedd data in latent space
 
 for j in range(args.pred_steps):
     z = model.dynamics(z) # evolve system in time
