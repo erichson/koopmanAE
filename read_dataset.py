@@ -17,6 +17,9 @@ def data_from_name(name):
         return flow_cylinder()
     if name == 'flow_noisy':
         return flow_cylinder_noisy()   
+    if name == 'flow150':
+        return flow_cylinder150()    
+    
     else:
         raise ValueError('dataset {} not recognized'.format(name))
 
@@ -199,3 +202,41 @@ def flow_cylinder_noisy():
     # Return train and test set
     #******************************************************************************
     return X, X_test, m, n
+
+
+def flow_cylinder150():
+    from scipy.io import loadmat
+    X = loadmat('data/sphere_s2_ns.mat')
+    X = X['U']
+    print(X.shape)
+    
+    # Split into train and test set
+    X = X[:, 65:, :]
+    X = X[:, ::6, ::3]
+    X = X[:, 0:64, 0:64]
+
+    t, m, n = X.shape
+ 
+    # mean subtract
+    X = X.reshape(-1,m*m)
+    X -= X.mean(axis=0)        
+    
+    # scale 
+    X = X.reshape(-1,m*m)
+    X = 2 * (X - np.min(X)) / np.ptp(X) - 1
+    X = X.reshape(-1,m,m)    
+    
+    # split into train and test set
+    
+    X = X[0:151]   
+    X_test = X[0:151]
+    
+    
+    #******************************************************************************
+    # Return train and test set
+    #******************************************************************************
+    return X, X_test, m, n
+
+
+
+
