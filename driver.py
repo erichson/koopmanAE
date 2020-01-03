@@ -61,7 +61,7 @@ parser = argparse.ArgumentParser(description='PyTorch Example')
 #
 parser.add_argument('--model', type=str, default='net', metavar='N', help='Model')
 #
-parser.add_argument('--dataset', type=str, default='harmonic', metavar='N', help='dataset')
+parser.add_argument('--dataset', type=str, default='sphere_s2_ns', metavar='N', help='dataset')
 #
 parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learning rate (default: 0.01)')
 #
@@ -79,9 +79,13 @@ parser.add_argument('--folder', type=str, default='results_det',  help='specify 
 #
 parser.add_argument('--lamb', type=float, default='4',  help='PCL penalty lambda hyperparameter')
 #
-parser.add_argument('--gamma', type=float, default='0',  help='Depricated')
+parser.add_argument('--nu', type=float, default='0',  help='une backward loss')
 #
-parser.add_argument('--steps', type=int, default='3',  help='steps for omega')
+parser.add_argument('--eta', type=float, default='0',  help='Tune consistent loss')
+#
+parser.add_argument('--steps', type=int, default='3',  help='steps for learning forward dynamics')
+#
+parser.add_argument('--steps_back', type=int, default='1',  help='steps for learning backwards dynamics')
 #
 parser.add_argument('--bottleneck', type=int, default='2',  help='bottleneck')
 #
@@ -89,7 +93,9 @@ parser.add_argument('--lr_update', type=int, nargs='+', default=[100, 300, 500],
 #
 parser.add_argument('--lr_decay', type=float, default='0.2',  help='PCL penalty lambda hyperparameter')
 #
-parser.add_argument('--pred_steps', type=int, default='1000',  help='Prediction steps')
+parser.add_argument('--backward', type=int, default=0, help='whether to train also with backward dynamics')
+#
+parser.add_argument('--pred_steps', type=int, default='50',  help='Prediction steps')
 #
 parser.add_argument('--seed', type=int, default='1',  help='Prediction steps')
 #
@@ -99,7 +105,7 @@ args = parser.parse_args()
 
 
 
-set_seed()
+set_seed(args.seed)
 device = get_device()
 
 
@@ -174,8 +180,8 @@ del(trainDat, testDat)
 #==============================================================================
 print(Xtrain.shape)
 if(args.model == 'net'):
-    model = shallow_autoencoder(Xtrain.shape[2], Xtrain.shape[3], args.bottleneck, args.steps)
-    model.apply(weights_init)
+    model = shallow_autoencoder(Xtrain.shape[2], Xtrain.shape[3], args.bottleneck, args.steps, args.steps_back)
+    #model.apply(weights_init)
     print('net')
 
 #elif(args.model == 'big'):
@@ -202,18 +208,12 @@ print(model)
 model, optimizer, epoch_hist = train(model, train_loader, test_loader,
                     lr=args.lr, weight_decay=args.wd, lamb=args.lamb, num_epochs = args.epochs,
                     learning_rate_change=args.lr_decay, epoch_update=args.lr_update,
-                    gamma = args.gamma)
+                    nu = args.nu, eta = args.eta, backward=args.backward, steps=args.steps, steps_back=args.steps_back)
 
 
 #with open(args.folder+"/model.pkl", "wb") as f:
 #    torch.save(model,f)
 torch.save(model.state_dict(), args.folder + '/model'+'.pkl')
-
-
-for param_group in optimizer.param_groups:
-    print(param_group['weight_decay'])
-    print(param_group['weight_decay_adapt'])
-
 
 
 
@@ -265,6 +265,8 @@ plt.close()
 
 np.save(args.folder +'/000_pred.npy', error)
 
+print('Average error of first pred: ', error.mean(axis=0)[0])
+print('Average error of last pred: ', error.mean(axis=0)[-1])
 
 
 

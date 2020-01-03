@@ -18,7 +18,7 @@ from tools import *
 
 from Adam_new import *
 
-from torch.utils.tensorboard import SummaryWriter
+from tensorboardX import SummaryWriter
 from colorize import *
 
 def train_vae(model, train_loader, test_loader, lr, weight_decay,

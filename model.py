@@ -3,28 +3,7 @@ from torch.autograd import grad
 import torch
 from torch.autograd import Variable, Function
 
-ALPHA = 2
-
-class FullResBlock(torch.nn.Module):
-    def __init__(self, in_features, out_features, act=torch.nn.functional.tanh):
-        super(FullResBlock,self).__init__()
-        self.act = act
-        
-        self.L1 = nn.Linear(in_features, int(in_features/2))
-        self.bn1 = torch.nn.functional.batch_norm       
-        self.L2 = nn.Linear(int(in_features/2), out_features)
-        self.bn2 = torch.nn.functional.batch_norm
-        
-    def forward(self, x):
-        residum = x
-        x = self.L1(x)
-        x = self.act(x)
-        #x = self.bn1(x)        
-        x = self.L2(x)
-        x = self.act(x)
-        #x = self.bn2(x) 
-        return x+residum
-
+ALPHA = 1
 
 class encoderNet(nn.Module):
     def __init__(self, m, n, b):
@@ -34,20 +13,24 @@ class encoderNet(nn.Module):
         self.relu = nn.ReLU()
 
         self.fc1 = nn.Linear(self.N, 32*ALPHA)
-        self.bn = nn.BatchNorm1d(1)
-        
-        self.resblock1 = FullResBlock(32*ALPHA, 32*ALPHA)
-        self.resblock2 = FullResBlock(32*ALPHA, 32*ALPHA)
-        self.fc4 = nn.Linear(32*ALPHA, b)
-        
+        self.fc2 = nn.Linear(32*ALPHA, 16*ALPHA)
+        self.fc3 = nn.Linear(16*ALPHA, 16*ALPHA)
+        self.fc4 = nn.Linear(16*ALPHA, 16*ALPHA)
+        self.fc5 = nn.Linear(16*ALPHA, b)
+
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0.0)          
 
     def forward(self, x):
         x = x.view(-1, 1, self.N)
         x = self.tanh(self.fc1(x))
-        #x = self.bn(x)
-        x = self.resblock1(x)     
-        x = self.resblock2(x)
-        x = self.fc4(x)
+        x = self.tanh(self.fc2(x))
+        x = self.tanh(self.fc3(x))        
+        x = self.tanh(self.fc4(x))        
+        x = self.fc5(x)
         return x
 
 
@@ -62,25 +45,27 @@ class decoderNet(nn.Module):
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
-        self.fc1 = nn.Linear(b, 32*ALPHA)
-        self.bn = nn.BatchNorm1d(1)        
-        self.resblock1 = FullResBlock(32*ALPHA, 32*ALPHA)
-        self.resblock2 = FullResBlock(32*ALPHA, 32*ALPHA)
-        self.fc4 = nn.Linear(32*ALPHA, m*n)
+        self.fc1 = nn.Linear(b, 16*ALPHA)
+        self.fc2 = nn.Linear(16*ALPHA, 16*ALPHA)
+        self.fc3 = nn.Linear(16*ALPHA, 16*ALPHA)
+        self.fc4 = nn.Linear(16*ALPHA, 32*ALPHA)
+        self.fc5 = nn.Linear(32*ALPHA, m*n)
 
-
-
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0.0)          
 
     def forward(self, x):
         x = x.view(-1, 1, self.b)
         x = self.tanh(self.fc1(x))
-        #x = self.bn(x)
-        x = self.resblock1(x)     
-        x = self.resblock2(x)
-        x = self.fc4(x)
+        x = self.tanh(self.fc2(x))
+        x = self.tanh(self.fc3(x))
+        x = self.tanh(self.fc4(x))
+        x = self.fc5(x)
         x = x.view(-1, 1, self.m, self.n)
         return x
-
 
 
 
@@ -90,53 +75,51 @@ class dynamics(nn.Module):
         super(dynamics, self).__init__()
         self.dynamics = nn.Linear(b, b, bias=False)
 
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0.0)         
+
     def forward(self, x):
         # 1 to 1 map
         x = self.dynamics(x)
         return x
 
 
-class backdynamics(nn.Module):
-    def __init__(self, b):
-        super(backdynamics, self).__init__()
-        self.dynamics = nn.Linear(b, b, bias=False)      
-
-    def forward(self, x):
-        # 1 to 1 map      
-        x = self.dynamics(x)
-        return x      
-    
-
 
 class shallow_autoencoder(nn.Module):
-    def __init__(self, m, n, b, steps):
+    def __init__(self, m, n, b, steps, steps_back):
         super(shallow_autoencoder, self).__init__()
         self.steps = steps
+        self.steps_back = steps_back
+        
         self.encoder = encoderNet(m, n, b)
         self.dynamics = dynamics(b)
-        #self.backdynamics = backdynamics(b)
+        self.backdynamics = dynamics(b)
         self.decoder = decoderNet(m, n, b)
 
-    def forward(self, x):
+
+    def forward(self, x, mode='forward'):
         out = []
         out_back = []
         z = self.encoder(x.contiguous())
-
-
         q = z.contiguous()
+
         
-        for _ in range(self.steps):
-            #q = q + self.dynamics(q)
-            #out.append(self.decoder(q))
-            
-            q = self.dynamics(q)
-            out.append(self.decoder(q.contiguous()))
+        if mode == 'forward':
+            for _ in range(self.steps):
+                q = self.dynamics(q)
+                out.append(self.decoder(q))
 
-            #q_back = self.backdynamics(q.contiguous())
-            #out_back.append(self.decoder(q_back))
-    
+            out.append(self.decoder(z.contiguous())) # Identity
+            return out, out_back    
 
-        out.append(self.decoder(z.contiguous())) # Identity
+        if mode == 'backward':
+            for _ in range(self.steps_back):
+                q = self.backdynamics(q)
+                out_back.append(self.decoder(q))
+                
+            out_back.append(self.decoder(z.contiguous())) # Identity
+            return out, out_back  
 
-
-        return out, out_back

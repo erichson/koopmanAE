@@ -20,9 +20,10 @@ from Adam_new import *
 
 
 def train_vae(model, train_loader, test_loader, lr, weight_decay,
-          lamb, num_epochs, learning_rate_change, epoch_update, eta=0.0, backward=False):
-    # optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=weight_decay)
-
+          lamb, num_epochs, learning_rate_change, epoch_update, nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1):
+    
+    
+    #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     device = get_device()
 
 
@@ -46,11 +47,11 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
         else:
             return optimizer
 
-    def wd_scheduler(optimizer, weight_decay):
-        """Decay learning rate by a factor of lr_decay_rate every lr_decay_epoch epochs"""
-        for param_group in optimizer.param_groups:
-            param_group['weight_decay_adapt'] = weight_decay
-        return optimizer
+#    def wd_scheduler(optimizer, weight_decay):
+#        """Decay learning rate by a factor of lr_decay_rate every lr_decay_epoch epochs"""
+#        for param_group in optimizer.param_groups:
+#            param_group['weight_decay_adapt'] = weight_decay
+#        return optimizer
 
     #criterion = nn.MSELoss()#.cuda()
 
@@ -69,30 +70,53 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
 
             data_list = [d.to(device) for d in data_list]    
 
-            reconstruction_y_i, _, _, _, _, _ = model(data_list[0])
+            reconstruction_y_i, _, _, _, _, _ = model(data_list[0], mode='forward')
             mse, entropy, dynamic_mse, dynamic_entropy, loss_identity = \
                 model.loss_function_multistep(data_list, reconstruction_y_i)
                 
-            loss = mse - gamma * entropy + beta * (dynamic_mse + dynamic_entropy) + lamb * loss_identity
+            loss_fwd = mse - gamma * entropy + beta * (dynamic_mse + dynamic_entropy) 
 
+
+            loss_identity *= steps
+
+            loss_bwd = 0.0 
+            loss_consist = 0.0
             if backward == 1:
                 _, _, _, _, _, reconstruction_y_i_back = model(data_list[-1], mode='backward')
+                
                 mse_b, entropy_b, dynamic_mse_b, dynamic_entropy_b, loss_identity_b = \
-                    model.loss_function_multistep(list(reversed(data_list)), reconstruction_y_i_back, backward=True)
+                    model.loss_function_multistep(list(reversed(data_list))[0:2], reconstruction_y_i_back, backward=True)
 
-                #loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b) + lamb * loss_identity_b) * 1e-5
-                loss += (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b))
-
+                loss_bwd = (mse_b - gamma * entropy_b + beta * (dynamic_mse_b + dynamic_entropy_b))
+                #loss_identity += loss_identity_b
     
                 # AB = I and BA = I
                 A = model.dynamics.dynamics.weight
                 B = model.backdynamics.dynamics.weight
-                AB = torch.mm(A, B)
-                BA = torch.mm(B, A)
-                I = torch.eye(AB.shape[0]).float().to(device)
+                # AB = torch.mm(A, B)
+                # BA = torch.mm(B, A)
+                # I = torch.eye(AB.shape[0]).float().to(device)
+                # loss_consist = eta * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
+
+                K = A.shape[-1]
                 
-                loss_consist = eta * (torch.sum((AB-I)**2)**0.5 + torch.sum((BA-I)**2)**0.5)
-                loss += loss_consist
+                for k in range(1,K+1):
+                    As1 = A[:,:k]
+                    Bs1 = B[:k,:]
+                    As2 = A[:k,:]
+                    Bs2 = B[:,:k]
+
+                    Ik = torch.eye(k).float().to(device)
+
+                    if k == 1:
+                        loss_consist = (torch.sum( (torch.mm(Bs1, As1)-Ik )**2)**1 + \
+                                         torch.sum( (torch.mm(As2, Bs2)-Ik )**2)**1 ) / (2.0*k)
+                    else:
+                        loss_consist += (torch.sum( (torch.mm(Bs1, As1)-Ik )**2)**1 + \
+                                         torch.sum( (torch.mm(As2, Bs2)-Ik )**2)**1 ) / (2.0*k)   
+                
+                
+            loss = loss_fwd  + lamb * loss_identity + nu * loss_bwd + eta * loss_consist
 
 
             # ===================backward====================
@@ -109,8 +133,11 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
         if (epoch) % 20 == 0:
             print('********** Epoch %s **********' % (epoch + 1))
 
-            #print("loss identity: ", loss_identity.item())
-            #print("loss prediction: ", loss_pred.item())
+            print("loss identity: ", loss_identity.item())
+            if backward == 1:
+                    print("loss backward: ", loss_bwd.item())
+                    print("loss consistent: ", loss_consist.item())
+            print("loss forward: ", loss_fwd.item())
             print("loss sum: ", loss.item())
 
             w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())

@@ -12,7 +12,7 @@ import matplotlib as mpl
 mpl.style.available
 mpl.style.use('seaborn-paper')
 from model_vae import DynamicVAE
-from train_vae_omri import train_vae
+from train_vae_TB import train_vae
 import torch
 from torch import nn
 from torch import autograd
