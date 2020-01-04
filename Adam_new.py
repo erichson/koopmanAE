@@ -94,7 +94,7 @@ class AdamPCL(Optimizer):
 
                 state['step'] += 1
 
-                if group['weight_decay_adapt'] != 0:
+                if group['weight_decay'] != 0:
                     
                     if idx not in group['alpha_list']:
                         grad.add_(group['weight_decay'], p.data)
