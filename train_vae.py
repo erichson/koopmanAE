@@ -71,6 +71,7 @@ def train_vae(model, train_loader, test_loader, lr, weight_decay,
             data_list = [d.to(device) for d in data_list]    
 
             reconstruction_y_i, _, _, _, _, _ = model(data_list[0], mode='forward')
+            
             mse, entropy, dynamic_mse, dynamic_entropy, loss_identity = \
                 model.loss_function_multistep(data_list, reconstruction_y_i)
                 

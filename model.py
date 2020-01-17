@@ -3,20 +3,18 @@ from torch.autograd import grad
 import torch
 from torch.autograd import Variable, Function
 
-ALPHA = 1
+
 
 class encoderNet(nn.Module):
-    def __init__(self, m, n, b):
+    def __init__(self, m, n, b, ALPHA = 1):
         super(encoderNet, self).__init__()
         self.N = m * n
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
         self.fc1 = nn.Linear(self.N, 32*ALPHA)
-        self.fc2 = nn.Linear(32*ALPHA, 16*ALPHA)
-        self.fc3 = nn.Linear(16*ALPHA, 16*ALPHA)
-        self.fc4 = nn.Linear(16*ALPHA, 16*ALPHA)
-        self.fc5 = nn.Linear(16*ALPHA, b)
+        self.fc2 = nn.Linear(32*ALPHA, 32*ALPHA)
+        self.fc3 = nn.Linear(32*ALPHA, b)
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -28,14 +26,12 @@ class encoderNet(nn.Module):
         x = x.view(-1, 1, self.N)
         x = self.tanh(self.fc1(x))
         x = self.tanh(self.fc2(x))
-        x = self.tanh(self.fc3(x))        
-        x = self.tanh(self.fc4(x))        
-        x = self.fc5(x)
+        x = self.fc3(x)
         return x
 
 
 class decoderNet(nn.Module):
-    def __init__(self, m, n, b):
+    def __init__(self, m, n, b, ALPHA = 1):
         super(decoderNet, self).__init__()
 
         self.m = m
@@ -45,11 +41,10 @@ class decoderNet(nn.Module):
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
-        self.fc1 = nn.Linear(b, 16*ALPHA)
-        self.fc2 = nn.Linear(16*ALPHA, 16*ALPHA)
-        self.fc3 = nn.Linear(16*ALPHA, 16*ALPHA)
-        self.fc4 = nn.Linear(16*ALPHA, 32*ALPHA)
-        self.fc5 = nn.Linear(32*ALPHA, m*n)
+        self.fc1 = nn.Linear(b, 32*ALPHA)
+        self.fc2 = nn.Linear(32*ALPHA, 32*ALPHA)
+        self.fc3 = nn.Linear(32*ALPHA, m*n)
+
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -59,11 +54,9 @@ class decoderNet(nn.Module):
 
     def forward(self, x):
         x = x.view(-1, 1, self.b)
-        x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
-        x = self.tanh(self.fc3(x))
-        x = self.tanh(self.fc4(x))
-        x = self.fc5(x)
+        x = self.tanh(self.fc1(x)) 
+        x = self.tanh(self.fc2(x)) 
+        x = self.fc3(x)
         x = x.view(-1, 1, self.m, self.n)
         return x
 
@@ -78,6 +71,9 @@ class dynamics(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight)
+                #idx = torch.arange(0, b, out=torch.LongTensor())
+                #m.weight.data *= 1e-6
+                #m.weight.data[idx,idx] = torch.eye(b)[idx,idx].float()
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0.0)         
 
@@ -89,15 +85,15 @@ class dynamics(nn.Module):
 
 
 class shallow_autoencoder(nn.Module):
-    def __init__(self, m, n, b, steps, steps_back):
+    def __init__(self, m, n, b, steps, steps_back, alpha = 1):
         super(shallow_autoencoder, self).__init__()
         self.steps = steps
         self.steps_back = steps_back
         
-        self.encoder = encoderNet(m, n, b)
+        self.encoder = encoderNet(m, n, b, ALPHA = alpha)
         self.dynamics = dynamics(b)
         self.backdynamics = dynamics(b)
-        self.decoder = decoderNet(m, n, b)
+        self.decoder = decoderNet(m, n, b, ALPHA = alpha)
 
 
     def forward(self, x, mode='forward'):

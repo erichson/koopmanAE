@@ -61,7 +61,9 @@ parser = argparse.ArgumentParser(description='PyTorch Example')
 #
 parser.add_argument('--model', type=str, default='net', metavar='N', help='Model')
 #
-parser.add_argument('--dataset', type=str, default='sphere_s2_ns', metavar='N', help='dataset')
+parser.add_argument('--alpha', type=int, default='1',  help='model width')
+#
+parser.add_argument('--dataset', type=str, default='pendulum_lin', metavar='N', help='dataset')
 #
 parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learning rate (default: 0.01)')
 #
@@ -180,7 +182,7 @@ del(trainDat, testDat)
 #==============================================================================
 print(Xtrain.shape)
 if(args.model == 'net'):
-    model = shallow_autoencoder(Xtrain.shape[2], Xtrain.shape[3], args.bottleneck, args.steps, args.steps_back)
+    model = shallow_autoencoder(Xtrain.shape[2], Xtrain.shape[3], args.bottleneck, args.steps, args.steps_back, args.alpha)
     #model.apply(weights_init)
     print('net')
 
@@ -216,7 +218,9 @@ model, optimizer, epoch_hist = train(model, train_loader, test_loader,
 torch.save(model.state_dict(), args.folder + '/model'+'.pkl')
 
 
-
+for param_group in optimizer.param_groups:
+    print('weight_decay: ', param_group['weight_decay'])
+    print('weight_decay_adapt: ', param_group['weight_decay_adapt'])
 
 #******************************************************************************
 # Prediction
@@ -224,6 +228,8 @@ torch.save(model.state_dict(), args.folder + '/model'+'.pkl')
 Xinput, Xtarget = Xtest[:-1], Xtest[1:]
 
 
+snapshots_pred = []
+snapshots_truth = []
 
 error = []
 for i in range(30):
@@ -237,8 +243,25 @@ for i in range(30):
                 x_pred = model.decoder(z) # map back to high-dimensional space
                 target_temp = Xtarget[i+j].data.cpu().numpy().reshape(m,n)
                 error_temp.append(np.linalg.norm(x_pred.data.cpu().numpy().reshape(m,n) - target_temp) / np.linalg.norm(target_temp))
-
+                
+                if i == 0:
+                    snapshots_pred.append(x_pred.data.cpu().numpy().reshape(m,n))
+                    snapshots_truth.append(target_temp)
+                
+                
+                
             error.append(np.asarray(error_temp))
+
+
+#np.save(args.folder +'/snapshots_pred.npy', np.asarray(snapshots_pred),)
+#np.save(args.folder +'/snapshots_truth.npy', np.asarray(snapshots_truth))
+
+import scipy
+save_preds = {'pred' : np.asarray(snapshots_pred), 'truth': np.asarray(snapshots_truth)}
+
+scipy.io.savemat(args.folder +'/snapshots_pred.mat', dict(save_preds), appendmat=True, format='5', long_field_names=False, do_compression=False, oned_as='row')
+
+
 
 error = np.asarray(error)
 

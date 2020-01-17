@@ -59,32 +59,7 @@ def harmonic():
         X.append(F(0.1,i).dot(x0) + np.random.standard_normal(2) * 0.01 )
         
     X = np.asarray(X)
-    X = X.T
-    
-#    #******************************************************************************
-#    # Empedding
-#    #******************************************************************************
-#    fig = plt.figure(figsize=(8,8))
-#    plt.plot(X[0,:], X[1,:], 'o', lw=1, label='', color='#377eb8')
-#    
-#    plt.tick_params(axis='x', labelsize=22)
-#    plt.tick_params(axis='y', labelsize=22)
-#    plt.locator_params(axis='y', nbins=10)
-#    plt.locator_params(axis='x', nbins=10)
-#    
-#    plt.ylabel('Relative prediction error', fontsize=22)
-#    plt.xlabel('Time step', fontsize=22)
-#    plt.grid(False)
-#    #plt.yscale("log")
-#    #plt.legend(fontsize=22)
-#    fig.tight_layout()
-#    #plt.savefig(args.folder +'/000prediction' +'.eps')
-    
-        
-    
-    
-    
-    
+    X = X.T  
     
     # Rotate to high-dimensional space
     Q = np.random.standard_normal((144,2))
@@ -117,16 +92,16 @@ def pendulum_lin():
         theta = 2.0*np.arcsin( S*sn )
         d_sn_du = cn*dn
         d_sn_dt = -omega_0 * d_sn_du
-        d_theta_dt = 0.5*S*d_sn_dt / np.sqrt(1.0-(S*sn)**2)
+        d_theta_dt = 2.0*S*d_sn_dt / np.sqrt(1.0-(S*sn)**2)
         return np.stack([theta, d_theta_dt],axis=1)
     
     
     
     anal_ts = np.linspace(0,35,1650)
-    X = sol(anal_ts, 0.5)
+    X = sol(anal_ts, 0.785398)
     X = X.T
     Xclean = X.copy()
-    X += np.random.standard_normal(X.shape) * 0.005
+    X += np.random.standard_normal(X.shape) * 0.00
     
 
 #    #******************************************************************************
@@ -243,95 +218,18 @@ def pendulum():
         theta = 2.0*np.arcsin( S*sn )
         d_sn_du = cn*dn
         d_sn_dt = -omega_0 * d_sn_du
-        d_theta_dt = 0.5*S*d_sn_dt / np.sqrt(1.0-(S*sn)**2)
+        d_theta_dt = 2.0*S*d_sn_dt / np.sqrt(1.0-(S*sn)**2)
         return np.stack([theta, d_theta_dt],axis=1)
     
     
     anal_ts = np.linspace(0,15,2050)
     
     anal_ts = np.linspace(0,35,1650)
-    X = sol(anal_ts, 2.5)
+    X = sol(anal_ts, 2.35619)
     X = X.T
     Xclean = X.copy()
-    X += np.random.standard_normal(X.shape) * 0.01
+    X += np.random.standard_normal(X.shape) * 0.000
     
-    
-#    #******************************************************************************
-#    # Empedding
-#    #******************************************************************************
-#    fig = plt.figure(figsize=(6,6))
-#    plt.plot(Xclean[0,:], Xclean[1,:], '-', lw=3, color='k', label='True trajecotry')
-#    plt.plot(X[0,:300], X[1,:300], 'o', lw=1, color='#dd1c77', label='Sampled data points', alpha=0.4)
-#
-#    plt.tick_params(axis='x', labelsize=18)
-#    plt.tick_params(axis='y', labelsize=18)
-#    plt.locator_params(axis='y', nbins=5)
-#    plt.locator_params(axis='x', nbins=5)
-#    
-#    plt.ylabel('Velocity', fontsize=18)
-#    plt.xlabel('Theta', fontsize=18)
-#    plt.grid(False)
-#    #plt.ylim(-2.5,2.5)
-#    #plt.xlim(-2.5,2.5)
-#    #plt.yscale("log")
-#    #plt.legend(fontsize=18)
-#    plt.axhline(y=0, color='k')
-#    plt.axvline(x=0, color='k')      
-#    plt.axis('off')
-#    plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='on')    
-#            
-#    
-#    fig.tight_layout()
-#    #plt.savefig(args.folder +'/000prediction' +'.eps')
-#    
-#    
-#    #******************************************************************************
-#    # Empedding
-#    #******************************************************************************
-#    fig = plt.figure(figsize=(8,3))
-#    plt.plot(np.arange(1,602), Xclean[0,0:601], '-', lw=2, label='training', color='k')
-#    plt.plot(np.arange(600,Xclean.shape[1]), Xclean[0,600::], '--', lw=2, label='test', color='k')
-#        
-#    plt.tick_params(axis='x', labelsize=22)
-#    plt.tick_params(axis='y', labelsize=22)
-#    plt.locator_params(axis='y', nbins=5)
-#    plt.locator_params(axis='x', nbins=5)
-#    
-#    plt.ylabel('Theta', fontsize=22)
-#    plt.xlabel('Time step', fontsize=22)
-#    plt.grid(False)
-#    plt.axhline(y=0, color='k')
-#    plt.axvline(x=0, color='k')      
-#    plt.axis('off')
-#    plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='on')    
-#    
-#    fig.tight_layout()
-#    #plt.savefig(args.folder +'/000prediction' +'.eps')
-#    
-#    #******************************************************************************
-#    # Empedding
-#    #******************************************************************************
-#    fig = plt.figure(figsize=(8,3))
-#    plt.plot(np.arange(1,602), Xclean[1,0:601], '-', lw=2, label='training', color='k')
-#    plt.plot(np.arange(600,Xclean.shape[1]), Xclean[1,600::], '--', lw=2, label='test', color='k')
-#    
-#    plt.tick_params(axis='x', labelsize=22)
-#    plt.tick_params(axis='y', labelsize=22)
-#    plt.locator_params(axis='y', nbins=5)
-#    plt.locator_params(axis='x', nbins=5)
-#    
-#    plt.ylabel('Velocity', fontsize=22)
-#    plt.xlabel('Time step', fontsize=22)
-#    plt.grid(False)
-#    plt.axhline(y=0, color='k')
-#    plt.axvline(x=0, color='k')      
-#    plt.axis('off')
-#    plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='on')    
-#    
-#    fig.tight_layout()
-#    #plt.savefig(args.folder +'/000prediction' +'.eps')
-                
-     
     
     # Rotate to high-dimensional space
     Q = np.random.standard_normal((144,2))
@@ -409,8 +307,8 @@ def flow_cylinder_noisy():
     
     # split into train and test set
     
-    X_train = X[0:151]   
-    X_test = X[0:151]  
+    X_train = X[30::]  
+    X_test = X
     
     
     #******************************************************************************
@@ -421,7 +319,7 @@ def flow_cylinder_noisy():
 
 def sphere_s2_ns():
     from scipy.io import loadmat
-    X = loadmat('data/sphere_s2_ns.mat')
+    X = loadmat('data/sphere_s2_ns_x3.mat')
     X = X['U']
     print(X.shape)
     
@@ -445,8 +343,8 @@ def sphere_s2_ns():
     
     # split into train and test set
     
-    X_train = X  
-    X_test = X[30::] 
+    X_train = X[50:] 
+    X_test = X[10:]
     
     
     #******************************************************************************
