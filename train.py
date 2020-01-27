@@ -30,7 +30,8 @@ from Adam_new import *
 
 
 def train(model, train_loader, test_loader, lr, weight_decay, 
-          lamb, num_epochs, learning_rate_change, epoch_update, nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1):
+          lamb, num_epochs, learning_rate_change, epoch_update, nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1,
+          criterion=nn.MSELoss()):
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     device = get_device()
@@ -66,24 +67,20 @@ def train(model, train_loader, test_loader, lr, weight_decay,
 
                      
         
-    criterion = nn.MSELoss().to(device)
-    #criterion2 = nn.L1Loss().to(device)
-
+    #criterion = criterion.to(device)
 
 
     epoch_hist = []
     loss_hist = []
     epoch_loss = []
-
-
                             
     for epoch in range(num_epochs):
-            
-        for batch_idx, data_list in enumerate(train_loader):            
-    
+        print(epoch)
+        for batch_idx, data_list in enumerate(train_loader):
             model.train()
             out, out_back = model(data_list[0].to(device), mode='forward')
-            
+
+
             for k in range(steps):
                 if k == 0:
                     loss_fwd = criterion(out[k], data_list[k+1].to(device))
@@ -116,27 +113,29 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                 #loss_identity += criterion(out_back[1], data_list[::-1][0].to(device))                        
                                             
                         
-                        
-                A = model.dynamics.dynamics.weight
-                B = model.backdynamics.dynamics.weight
+                if hasattr(model.dynamics, 'dynamics') and hasattr(model.backdynamics, 'backdynamics'):
+                    A = model.dynamics.dynamics.weight
+                    B = model.backdynamics.dynamics.weight
 
-                K = A.shape[-1]
-                
-                for k in range(1,K+1):
-                    As1 = A[:,:k]
-                    Bs1 = B[:k,:]
-                    As2 = A[:k,:]
-                    Bs2 = B[:,:k]
+                    K = A.shape[-1]
 
-                    Ik = torch.eye(k).float().to(device)
+                    for k in range(1,K+1):
+                        As1 = A[:,:k]
+                        Bs1 = B[:k,:]
+                        As2 = A[:k,:]
+                        Bs2 = B[:,:k]
 
-                    if k == 1:
-                        loss_consist = (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                         torch.sum((torch.mm(As2, Bs2) - Ik)**2) ) / (2.0*k)
-                    else:
-                        loss_consist += (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                         torch.sum((torch.mm(As2, Bs2)-  Ik)**2) ) / (2.0*k)    
-                        
+                        Ik = torch.eye(k).float().to(device)
+
+                        if k == 1:
+                            loss_consist = (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
+                                             torch.sum((torch.mm(As2, Bs2) - Ik)**2) ) / (2.0*k)
+                        else:
+                            loss_consist += (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
+                                             torch.sum((torch.mm(As2, Bs2)-  Ik)**2) ) / (2.0*k)
+                else:
+                    loss_consist = 0
+
                 
                 
                 
@@ -149,21 +148,11 @@ def train(model, train_loader, test_loader, lr, weight_decay,
     
             loss = loss_fwd + lamb * loss_identity +  nu * loss_bwd + eta * loss_consist
 
-
-
             # ===================backward====================
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()           
-            
 
-
-     
-
-            
-
-
-    
         # schedule learning rate decay    
         exp_lr_scheduler(optimizer, epoch, lr_decay_rate=learning_rate_change, decayEpoch=epoch_update)
         loss_hist.append(loss)                
@@ -182,10 +171,12 @@ def train(model, train_loader, test_loader, lr, weight_decay,
 
                 epoch_hist.append(epoch+1) 
 
-                w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
-                print(np.abs(w))
+                if hasattr(model.dynamics, 'dynamics'):
+                    w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
+                    print(np.abs(w))
 
                 #print(w)
+
     plt.figure()
     plt.plot(epoch_loss[1:], loss_hist[1:])
     plt.yscale('log')

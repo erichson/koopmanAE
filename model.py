@@ -117,5 +117,38 @@ class shallow_autoencoder(nn.Module):
                 out_back.append(self.decoder(q))
                 
             out_back.append(self.decoder(z.contiguous())) # Identity
-            return out, out_back  
+            return out, out_back
+
+
+class RNN_AE(nn.Module):
+
+    def __init__(self, m, n, b, steps, steps_back, num_layers=1, alpha=1):
+
+        super(RNN_AE, self).__init__()
+        self.steps = steps
+        self.steps_back = steps_back
+        self.encoder = encoderNet(m, n, b, ALPHA=alpha)
+        self.decoder = decoderNet(m, n, b, ALPHA=alpha)
+        self.dynamics = torch.nn.modules.RNN(input_size=b, hidden_size=b, num_layers=num_layers)
+        self.backdynamics = torch.nn.modules.RNN(input_size=b, hidden_size=b, num_layers=num_layers)
+
+    def forward(self, x, mode='forward'):
+        z = self.encoder(x.contiguous())
+        q = z.contiguous()
+        hidden = None
+        out = []
+        out_back = []
+
+        if mode == 'forward':
+            for _ in range(self.steps):
+                a, hidden = self.dynamics.forward(q, hidden)
+                out.append(self.decoder(a))
+
+        if mode == 'backward':
+            for _ in range(self.steps_back):
+                a, hidden = self.backdynamics.forward(q, hidden)
+                out_back.append(self.decoder(a))
+
+        return out, out_back
+
 

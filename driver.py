@@ -106,7 +106,6 @@ parser.add_argument('--seed', type=int, default='1',  help='Prediction steps')
 args = parser.parse_args()
 
 
-
 set_seed(args.seed)
 device = get_device()
 
@@ -154,11 +153,6 @@ for i in np.arange(args.steps,-1, -1):
     start += 1
 
 train_data = torch.utils.data.TensorDataset(*trainDat)
-train_loader = DataLoader(dataset = train_data,
-                          batch_size = args.batch,
-                          shuffle = True)
-
-
 testDat = []
 start = 0
 for i in np.arange(args.steps,-1, -1):
@@ -169,20 +163,26 @@ for i in np.arange(args.steps,-1, -1):
     start += 1
 
 test_data = torch.utils.data.TensorDataset(*testDat)
-test_loader = DataLoader(dataset = test_data,
-                          batch_size = args.batch_test,
-                          shuffle = False)
-
-
 del(trainDat, testDat)
 
+train_loader = DataLoader(dataset = train_data,
+                              batch_size = args.batch,
+                              shuffle = True)
+test_loader = DataLoader(dataset = test_data,
+                              batch_size = args.batch_test,
+                              shuffle = False)
 
 #==============================================================================
 # Model
 #==============================================================================
 print(Xtrain.shape)
 if(args.model == 'net'):
-    model = shallow_autoencoder(Xtrain.shape[2], Xtrain.shape[3], args.bottleneck, args.steps, args.steps_back, args.alpha)
+    model = shallow_autoencoder(m, n, args.bottleneck, args.steps, args.steps_back, args.alpha)
+    #model.apply(weights_init)
+    print('net')
+
+if(args.model == 'rnn'):
+    model = RNN_AE(m, n, args.bottleneck, args.steps, args.steps_back, args.alpha)
     #model.apply(weights_init)
     print('net')
 
@@ -207,10 +207,18 @@ print(model)
 #==============================================================================
 # Start training
 #==============================================================================
+criterion = nn.MSELoss()
+if 'PTB' in args.dataset:
+    def cross_entropy_one_hot(input, target):
+        _, labels = target.max(dim=-1)
+        return nn.CrossEntropyLoss(reduction='mean')(torch.squeeze(input), torch.squeeze(labels))
+    criterion = cross_entropy_one_hot
+
 model, optimizer, epoch_hist = train(model, train_loader, test_loader,
                     lr=args.lr, weight_decay=args.wd, lamb=args.lamb, num_epochs = args.epochs,
                     learning_rate_change=args.lr_decay, epoch_update=args.lr_update,
-                    nu = args.nu, eta = args.eta, backward=args.backward, steps=args.steps, steps_back=args.steps_back)
+                    nu = args.nu, eta = args.eta, backward=args.backward, steps=args.steps, steps_back=args.steps_back,
+                                     criterion=criterion)
 
 
 #with open(args.folder+"/model.pkl", "wb") as f:
@@ -237,10 +245,15 @@ for i in range(30):
             
             z = model.encoder(Xinput[i].float().to(device)) # embedd data in latent space
 
-
             for j in range(args.pred_steps):
-                z = model.dynamics(z) # evolve system in time
-                x_pred = model.decoder(z) # map back to high-dimensional space
+                if isinstance(z, tuple):
+                    z = model.dynamics(*z) # evolve system in time
+                else:
+                    z = model.dynamics(z)
+                if isinstance(z, tuple):
+                    x_pred = model.decoder(z[0])
+                else:
+                    x_pred = model.decoder(z) # map back to high-dimensional space
                 target_temp = Xtarget[i+j].data.cpu().numpy().reshape(m,n)
                 error_temp.append(np.linalg.norm(x_pred.data.cpu().numpy().reshape(m,n) - target_temp) / np.linalg.norm(target_temp))
                 
@@ -305,6 +318,8 @@ z = model.encoder(Xinput[0].float().to(device)) # embedd data in latent space
 
 for j in range(args.pred_steps):
     z = model.dynamics(z) # evolve system in time
+    if isinstance(z, tuple):
+        z = z[0]
     emb.append(z.data.cpu().numpy().reshape(args.bottleneck))              
 
 emb = np.asarray(emb)
@@ -338,32 +353,33 @@ plt.close()
 # Eigenvalues
 #******************************************************************************
 model.eval()
-A =  model.dynamics.dynamics.weight.cpu().data.numpy()
-#A =  model.module.test.data.cpu().data.numpy()
-w, v = np.linalg.eig(A)
-print(np.abs(w))
+if hasattr(model.dynamics, 'dynamics'):
+    A =  model.dynamics.dynamics.weight.cpu().data.numpy()
+    #A =  model.module.test.data.cpu().data.numpy()
+    w, v = np.linalg.eig(A)
+    print(np.abs(w))
 
-fig = plt.figure(figsize=(6.1, 6.1), facecolor="white",  edgecolor='k', dpi=150)
-plt.scatter(w.real, w.imag, c = '#dd1c77', marker = 'o', s=15*6, zorder=2, label='Eigenvalues')
+    fig = plt.figure(figsize=(6.1, 6.1), facecolor="white",  edgecolor='k', dpi=150)
+    plt.scatter(w.real, w.imag, c = '#dd1c77', marker = 'o', s=15*6, zorder=2, label='Eigenvalues')
 
-maxeig = 1.4
-plt.xlim([-maxeig, maxeig])
-plt.ylim([-maxeig, maxeig])
-plt.locator_params(axis='x',nbins=4)
-plt.locator_params(axis='y',nbins=4)
+    maxeig = 1.4
+    plt.xlim([-maxeig, maxeig])
+    plt.ylim([-maxeig, maxeig])
+    plt.locator_params(axis='x',nbins=4)
+    plt.locator_params(axis='y',nbins=4)
 
-plt.xlabel('Real', fontsize=22)
-plt.ylabel('Imaginary', fontsize=22)
-plt.tick_params(axis='y', labelsize=22)
-plt.tick_params(axis='x', labelsize=22)
-plt.axhline(y=0,color='#636363',ls='-', lw=3, zorder=1 )
-plt.axvline(x=0,color='#636363',ls='-', lw=3, zorder=1 )
+    plt.xlabel('Real', fontsize=22)
+    plt.ylabel('Imaginary', fontsize=22)
+    plt.tick_params(axis='y', labelsize=22)
+    plt.tick_params(axis='x', labelsize=22)
+    plt.axhline(y=0,color='#636363',ls='-', lw=3, zorder=1 )
+    plt.axvline(x=0,color='#636363',ls='-', lw=3, zorder=1 )
 
-#plt.legend(loc="upper left", fontsize=16)
-t = np.linspace(0,np.pi*2,100)
-plt.plot(np.cos(t), np.sin(t), ls='-', lw=3, c = '#636363', zorder=1 )
-plt.tight_layout()
-plt.show()
-plt.savefig(args.folder +'/000eigs' +'.png')
-plt.savefig(args.folder +'/000eigs' +'.eps')
-plt.close()
+    #plt.legend(loc="upper left", fontsize=16)
+    t = np.linspace(0,np.pi*2,100)
+    plt.plot(np.cos(t), np.sin(t), ls='-', lw=3, c = '#636363', zorder=1 )
+    plt.tight_layout()
+    plt.show()
+    plt.savefig(args.folder +'/000eigs' +'.png')
+    plt.savefig(args.folder +'/000eigs' +'.eps')
+    plt.close()

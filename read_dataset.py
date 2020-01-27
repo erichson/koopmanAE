@@ -6,7 +6,9 @@ from matplotlib import pylab as plt
 from scipy.special import ellipj, ellipk
 
 from scipy.special import ellipj, ellipk
-
+from torchtext.datasets import PennTreebank
+import torchtext
+import torch
 
 #******************************************************************************
 # Read in data
@@ -23,7 +25,11 @@ def data_from_name(name):
     if name == 'flow_noisy':
         return flow_cylinder_noisy()   
     if name == 'sphere_s2_ns':
-        return sphere_s2_ns()    
+        return sphere_s2_ns()
+    if name == 'word_PTB':
+        return word_ptb()
+    if name == 'char_PTB':
+        return char_ptb()
     
     else:
         raise ValueError('dataset {} not recognized'.format(name))
@@ -41,6 +47,29 @@ def rescale(Xsmall, Xsmall_test):
 
     return Xsmall, Xsmall_test
 
+
+def word_ptb():
+    return PennTreebank.splits(text_field=torchtext.data.Field(batch_first=True))
+
+
+def char_ptb():
+    CHARS = torchtext.data.Field(tokenize=list)
+    train, test, _ = torchtext.datasets.PennTreebank.splits(CHARS)
+    CHARS.build_vocab(train)
+    train_iter, test_iter = torchtext.data.BucketIterator.splits(
+        (train, test), batch_size=1)
+    num_classes = 50
+    train = list(train_iter)[0].text - 2
+    test = list(test_iter)[0].text - 2
+    train = torch.nn.functional.one_hot(train.type(torch.int64),
+                                        num_classes=num_classes).type(torch.FloatTensor).numpy()
+    test = torch.nn.functional.one_hot(test.type(torch.int64),
+                                       num_classes=num_classes).type(torch.FloatTensor).numpy()
+    return train, test, 1, 50
+
+
+def ptb():
+    return PennTreebank.splits(text_field=torchtext.data.Field(batch_first=True))
 
 
 def harmonic():
