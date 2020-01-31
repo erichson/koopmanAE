@@ -24,10 +24,10 @@ python driver.py --alpha 1 --dataset pendulum --noise 0.0 --lr 1e-2 --epochs 600
 
 
 
-# Example pendulum with noise 0.05
+# Example pendulum with noise 0.03
 ##############################################
-python driver.py --alpha 1 --dataset pendulum --noise 0.05 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_pendulum_6_noise_03 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 0 --wd 0 --seed 0
-python driver.py --alpha 1 --dataset pendulum --noise 0.05 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_back_pendulum_6_noise_03 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0 --seed 0
+python driver.py --alpha 1 --dataset pendulum --noise 0.03 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_pendulum_6_noise_03 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 0 --wd 0 --seed 0
+python driver.py --alpha 1 --dataset pendulum --noise 0.03 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_back_pendulum_6_noise_03 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0 --seed 0
 
 
 

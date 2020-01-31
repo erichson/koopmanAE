@@ -159,9 +159,6 @@ else:
     result2 = np.load('results_det_back_pendulum_6_noise_03/000_pred.npy') 
  
 
-    result1 = np.load('results_det_pendulum_6/000_pred.npy')                  
-    result2 = np.load('results_det_back_pendulum_6/000_pred.npy') 
-
 
 
 
