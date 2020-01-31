@@ -114,7 +114,7 @@ def harmonic():
     #******************************************************************************
     # Return train and test set
     #******************************************************************************
-    return X_train, X_test, 64, 1
+    return X_train, X_test, X_train, X_test, 64, 1
 
 
 
@@ -456,7 +456,7 @@ def sst():
     #******************************************************************************
     # Return train and test set
     #******************************************************************************
-    return X_train, X_test, m, n
+    return X_train, X_test, X_train, X_test, m, n
 
 
 
@@ -493,7 +493,7 @@ def sphere_s2_ns():
     #******************************************************************************
     # Return train and test set
     #******************************************************************************
-    return X_train, X_test, m, 1
+    return X_train, X_test, X_train, X_test, m, 1
 
 def sphere_s2_tf():
     from scipy.io import loadmat
@@ -527,6 +527,6 @@ def sphere_s2_tf():
     #******************************************************************************
     # Return train and test set
     #******************************************************************************
-    return X_train, X_test, m, 1
+    return X_train, X_test, X_train, X_test, m, 1
 
 

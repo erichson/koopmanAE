@@ -85,11 +85,7 @@ if test == 'no':
     
     
     
-    result1 = np.load('results_det_sst_alpha2/000_pred.npy')                  
-    result2 = np.load('results_det_back_sst_alpha2/000_pred.npy') 
-    
-    
-    
+
     result1 = np.load('results_det_flow_alpha1/000_pred.npy')                  
     result2 = np.load('results_det_back_flow_alpha1/000_pred.npy') 
     
@@ -133,14 +129,16 @@ if test == 'no':
 
 
 
-    result1 = np.load('results_det_pendulum_lin_6_noise_03/000_pred.npy')                  
-    result2 = np.load('results_det_back_pendulum_lin_6_noise_03/000_pred.npy') 
-
-    
-    result1 = np.load('results_det_pendulum_lin_6/000_pred.npy')                  
-    result2 = np.load('results_det_back_pendulum_lin_6/000_pred.npy') 
 
 
+
+
+    result1 = np.load('results_det_pendulum_6/000_pred.npy')                  
+    result2 = np.load('results_det_back_pendulum_6/000_pred.npy') 
+
+    result1 = np.load('results_det_pendulum_6_noise_03/000_pred.npy')                  
+    result2 = np.load('results_det_back_pendulum_6_noise_03/000_pred.npy') 
+ 
 
 
 
@@ -153,15 +151,11 @@ else:
 
 
     
-
-
-    result1 = np.load('results_det_pendulum_6_noise_03/000_pred.npy')                  
-    result2 = np.load('results_det_back_pendulum_6_noise_03/000_pred.npy') 
- 
-
-    result1 = np.load('results_det_pendulum_6/000_pred.npy')                  
-    result2 = np.load('results_det_back_pendulum_6/000_pred.npy') 
-
+    result1 = np.load('results_det_sst_alpha2/000_pred.npy')                  
+    result2 = np.load('results_det_back_sst_alpha2/000_pred.npy') 
+    
+    
+    
 
 
 

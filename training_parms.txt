@@ -37,7 +37,6 @@ python driver.py --alpha 1 --dataset pendulum --noise 0.03 --lr 1e-2 --epochs 60
 
 
 
-
 # Example flow past cylinder with alpha 2
 ##############################################
 python driver.py --dataset flow --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_flow_alpha2 --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 0 --wd 5e-4 --seed 0
