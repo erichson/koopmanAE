@@ -30,8 +30,7 @@ from Adam_new import *
 
 
 def train(model, train_loader, test_loader, lr, weight_decay, 
-          lamb, num_epochs, learning_rate_change, epoch_update, nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1,
-          criterion=nn.MSELoss()):
+          lamb, num_epochs, learning_rate_change, epoch_update, nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1, criterion=nn.MSELoss()):
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     device = get_device()
@@ -67,13 +66,10 @@ def train(model, train_loader, test_loader, lr, weight_decay,
 
                      
         
-<<<<<<< HEAD
-    criterion = nn.MSELoss().to(device)
-    criterion2 = nn.L1Loss().to(device)
 
-=======
-    #criterion = criterion.to(device)
->>>>>>> 78fa033a45ae7246cae7a826a7a95aea6665bd63
+    criterion = nn.MSELoss().to(device)
+    #criterion2 = nn.L1Loss().to(device)
+
 
 
     epoch_hist = []
@@ -81,7 +77,7 @@ def train(model, train_loader, test_loader, lr, weight_decay,
     epoch_loss = []
                             
     for epoch in range(num_epochs):
-        print(epoch)
+        #print(epoch)
         for batch_idx, data_list in enumerate(train_loader):
             model.train()
             out, out_back = model(data_list[0].to(device), mode='forward')
@@ -119,28 +115,26 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                 #loss_identity += criterion(out_back[1], data_list[::-1][0].to(device))                        
                                             
                         
-                if hasattr(model.dynamics, 'dynamics') and hasattr(model.backdynamics, 'backdynamics'):
-                    A = model.dynamics.dynamics.weight
-                    B = model.backdynamics.dynamics.weight
+                A = model.dynamics.dynamics.weight
+                B = model.backdynamics.dynamics.weight
 
-                    K = A.shape[-1]
+                K = A.shape[-1]
 
-                    for k in range(1,K+1):
-                        As1 = A[:,:k]
-                        Bs1 = B[:k,:]
-                        As2 = A[:k,:]
-                        Bs2 = B[:,:k]
+                for k in range(1,K+1):
+                    As1 = A[:,:k]
+                    Bs1 = B[:k,:]
+                    As2 = A[:k,:]
+                    Bs2 = B[:,:k]
 
-                        Ik = torch.eye(k).float().to(device)
+                    Ik = torch.eye(k).float().to(device)
 
-                        if k == 1:
-                            loss_consist = (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                             torch.sum((torch.mm(As2, Bs2) - Ik)**2) ) / (2.0*k)
-                        else:
-                            loss_consist += (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
-                                             torch.sum((torch.mm(As2, Bs2)-  Ik)**2) ) / (2.0*k)
-                else:
-                    loss_consist = 0
+                    if k == 1:
+                        loss_consist = (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
+                                         torch.sum((torch.mm(As2, Bs2) - Ik)**2) ) / (2.0*k)
+                    else:
+                        loss_consist += (torch.sum((torch.mm(Bs1, As1) - Ik)**2) + \
+                                         torch.sum((torch.mm(As2, Bs2)-  Ik)**2) ) / (2.0*k)
+
 
                 
                 

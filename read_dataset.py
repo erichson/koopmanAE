@@ -6,8 +6,7 @@ from matplotlib import pylab as plt
 from scipy.special import ellipj, ellipk
 
 from scipy.special import ellipj, ellipk
-from torchtext.datasets import PennTreebank
-import torchtext
+
 import torch
 
 #******************************************************************************
@@ -25,20 +24,20 @@ def data_from_name(name, noise = 0.0):
     if name == 'flow_noisy':
         return flow_cylinder_noisy()   
     if name == 'sphere_s2_ns':
-<<<<<<< HEAD
         return sphere_s2_ns()    
     if name == 'sphere_s2_tf':
         return sphere_s2_tf()      
     if name == 'sst':
         return sst()
-
-=======
         return sphere_s2_ns()
     if name == 'word_PTB':
+        from torchtext.datasets import PennTreebank
+        import torchtext
         return word_ptb()
     if name == 'char_PTB':
+        from torchtext.datasets import PennTreebank
+        import torchtext        
         return char_ptb()
->>>>>>> 78fa033a45ae7246cae7a826a7a95aea6665bd63
     
     else:
         raise ValueError('dataset {} not recognized'.format(name))
