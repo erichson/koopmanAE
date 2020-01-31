@@ -67,7 +67,7 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                      
         
     criterion = nn.MSELoss().to(device)
-    #criterion2 = nn.L1Loss().to(device)
+    criterion2 = nn.L1Loss().to(device)
 
 
 

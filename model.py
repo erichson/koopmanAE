@@ -12,9 +12,9 @@ class encoderNet(nn.Module):
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
-        self.fc1 = nn.Linear(self.N, 32*ALPHA)
-        self.fc2 = nn.Linear(32*ALPHA, 32*ALPHA)
-        self.fc3 = nn.Linear(32*ALPHA, b)
+        self.fc1 = nn.Linear(self.N, 16*ALPHA)
+        self.fc2 = nn.Linear(16*ALPHA, 16*ALPHA)
+        self.fc3 = nn.Linear(16*ALPHA, b)
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -25,7 +25,7 @@ class encoderNet(nn.Module):
     def forward(self, x):
         x = x.view(-1, 1, self.N)
         x = self.tanh(self.fc1(x))
-        x = self.tanh(self.fc2(x))
+        x = self.tanh(self.fc2(x))        
         x = self.fc3(x)
         return x
 
@@ -41,9 +41,9 @@ class decoderNet(nn.Module):
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
 
-        self.fc1 = nn.Linear(b, 32*ALPHA)
-        self.fc2 = nn.Linear(32*ALPHA, 32*ALPHA)
-        self.fc3 = nn.Linear(32*ALPHA, m*n)
+        self.fc1 = nn.Linear(b, 16*ALPHA)
+        self.fc2 = nn.Linear(16*ALPHA, 16*ALPHA)
+        self.fc3 = nn.Linear(16*ALPHA, m*n)
 
 
         for m in self.modules():
@@ -56,7 +56,10 @@ class decoderNet(nn.Module):
         x = x.view(-1, 1, self.b)
         x = self.tanh(self.fc1(x)) 
         x = self.tanh(self.fc2(x)) 
-        x = self.fc3(x)
+        x = self.tanh(self.fc3(x))
+        #x = (self.fc3(x))
+        
+        
         x = x.view(-1, 1, self.m, self.n)
         return x
 

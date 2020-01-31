@@ -63,7 +63,9 @@ parser.add_argument('--model', type=str, default='net', metavar='N', help='Model
 #
 parser.add_argument('--alpha', type=int, default='1',  help='model width')
 #
-parser.add_argument('--dataset', type=str, default='pendulum_lin', metavar='N', help='dataset')
+parser.add_argument('--dataset', type=str, default='flow_noisy', metavar='N', help='dataset')
+#
+parser.add_argument('--noise', type=float, default=0.0,  metavar='N', help='noise level')
 #
 parser.add_argument('--lr', type=float, default=1e-2, metavar='N', help='learning rate (default: 0.01)')
 #
@@ -77,7 +79,7 @@ parser.add_argument('--batch_test', type=int, default=50, metavar='N', help='bat
 #
 parser.add_argument('--plotting', type=bool, default=True, metavar='N', help='number of epochs to train (default: 10)')
 #
-parser.add_argument('--folder', type=str, default='results_det',  help='specify directory to print results to')
+parser.add_argument('--folder', type=str, default='test',  help='specify directory to print results to')
 #
 parser.add_argument('--lamb', type=float, default='4',  help='PCL penalty lambda hyperparameter')
 #
@@ -101,6 +103,8 @@ parser.add_argument('--pred_steps', type=int, default='50',  help='Prediction st
 #
 parser.add_argument('--seed', type=int, default='1',  help='Prediction steps')
 #
+parser.add_argument('--SNR', type=float, default='0',  help='Prediction steps')
+#
 
 
 args = parser.parse_args()
@@ -123,20 +127,33 @@ if not os.path.isdir(args.folder):
 #******************************************************************************
 # load data
 #******************************************************************************
-Xtrain, Xtest, m, n = data_from_name(args.dataset)
-Xfull = np.concatenate((Xtrain,Xtest))
+Xtrain, Xtest, Xtrain_clean, Xtest_clean, m, n = data_from_name(args.dataset, noise=args.noise)
+
+
 
 #******************************************************************************
 # Reshape data for pytorch into 4D tensor Samples x Channels x Width x Hight
 #******************************************************************************
 Xtrain = add_channels(Xtrain)
 Xtest = add_channels(Xtest)
-Xfull = add_channels(Xfull)
 
 # transfer to tensor
 Xtrain = torch.from_numpy(Xtrain).float().contiguous()
 Xtest = torch.from_numpy(Xtest).float().contiguous()
-Xfull = torch.from_numpy(Xfull).float().contiguous()
+
+
+
+#******************************************************************************
+# Reshape data for pytorch into 4D tensor Samples x Channels x Width x Hight
+#******************************************************************************
+Xtrain_clean = add_channels(Xtrain_clean)
+Xtest_clean = add_channels(Xtest_clean)
+
+# transfer to tensor
+Xtrain_clean = torch.from_numpy(Xtrain_clean).float().contiguous()
+Xtest_clean = torch.from_numpy(Xtest_clean).float().contiguous()
+
+
 
 
 #******************************************************************************
@@ -180,6 +197,8 @@ del(trainDat, testDat)
 #==============================================================================
 # Model
 #==============================================================================
+
+
 print(Xtrain.shape)
 if(args.model == 'net'):
     model = shallow_autoencoder(Xtrain.shape[2], Xtrain.shape[3], args.bottleneck, args.steps, args.steps_back, args.alpha)
@@ -222,20 +241,48 @@ for param_group in optimizer.param_groups:
     print('weight_decay: ', param_group['weight_decay'])
     print('weight_decay_adapt: ', param_group['weight_decay_adapt'])
 
+
+
 #******************************************************************************
 # Prediction
 #******************************************************************************
 Xinput, Xtarget = Xtest[:-1], Xtest[1:]
+_, Xtarget = Xtest_clean[:-1], Xtest_clean[1:]
+
+
 
 
 snapshots_pred = []
 snapshots_truth = []
 
+
 error = []
 for i in range(30):
             error_temp = []
             
-            z = model.encoder(Xinput[i].float().to(device)) # embedd data in latent space
+            
+
+            if args.SNR > 0:
+                signal = np.var(Xinput[i].data.cpu().numpy())
+                noise = signal / args.SNR
+
+                init = Xinput[i].float().to(device)
+                init += torch.tensor(np.random.normal(0, noise**0.5, Xinput[i].data.cpu().numpy().shape)).float().to(device)
+            
+                print('add noise')
+            
+            else:   
+                init = Xinput[i].float().to(device)
+            
+            
+            if i == 0:
+                init0 = init
+            
+            
+            z = model.encoder(init) # embedd data in latent space
+            
+            
+
 
 
             for j in range(args.pred_steps):
@@ -251,15 +298,6 @@ for i in range(30):
                 
                 
             error.append(np.asarray(error_temp))
-
-
-#np.save(args.folder +'/snapshots_pred.npy', np.asarray(snapshots_pred),)
-#np.save(args.folder +'/snapshots_truth.npy', np.asarray(snapshots_truth))
-
-import scipy
-save_preds = {'pred' : np.asarray(snapshots_pred), 'truth': np.asarray(snapshots_truth)}
-
-scipy.io.savemat(args.folder +'/snapshots_pred.mat', dict(save_preds), appendmat=True, format='5', long_field_names=False, do_compression=False, oned_as='row')
 
 
 
@@ -290,14 +328,31 @@ np.save(args.folder +'/000_pred.npy', error)
 
 print('Average error of first pred: ', error.mean(axis=0)[0])
 print('Average error of last pred: ', error.mean(axis=0)[-1])
+print('Average error overarll pred: ', np.mean(error.mean(axis=0)))
 
+
+#******************************************************************************
+# Visualize snapshots
+#******************************************************************************
+if args.dataset == 'flow' or args.dataset == 'flow_noisy' or args.dataset == 'sst':
+    
+    
+    
+    import scipy
+    save_preds = {'pred' : np.asarray(snapshots_pred), 'truth': np.asarray(snapshots_truth), 'init': np.asarray(init0.float().to(device).data.cpu().numpy().reshape(m,n))}
+    
+    scipy.io.savemat(args.folder +'/snapshots_pred.mat', dict(save_preds), appendmat=True, format='5', long_field_names=False, do_compression=False, oned_as='row')
 
 
 
 #******************************************************************************
-# Empedding
+# Embedding
 #******************************************************************************
 Xinput, Xtarget = Xtest[:-1], Xtest[1:]
+
+
+
+   
 
 emb = []
             
@@ -330,6 +385,20 @@ plt.savefig(args.folder +'/embedding' +'.png')
 #plt.savefig(args.folder +'/000prediction' +'.eps')
 
 plt.close()
+np.save(args.folder +'/000_emb.npy', emb)
+
+
+
+emb_truth = []
+for j in range(args.pred_steps):
+    z = model.encoder(Xtarget[j].float().to(device))
+    emb_truth.append(z.data.cpu().numpy().reshape(args.bottleneck))              
+
+emb_truth = np.asarray(emb_truth)
+
+np.save(args.folder +'/000_emb_truth.npy', emb_truth)
+
+
 
 
 
@@ -366,4 +435,5 @@ plt.tight_layout()
 plt.show()
 plt.savefig(args.folder +'/000eigs' +'.png')
 plt.savefig(args.folder +'/000eigs' +'.eps')
+plt.close()
 plt.close()

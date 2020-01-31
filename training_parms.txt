@@ -1,0 +1,108 @@
+
+
+
+# Example pendulum linearized without noise
+############################################
+python driver.py --alpha 1 --dataset pendulum_lin --noise 0.0 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_pendulum_lin_6 --lamb 1 --steps 6 --bottleneck 6  --lr_update 30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 0 --wd 0 --seed 0
+python driver.py --alpha 1 --dataset pendulum_lin --noise 0.0 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_back_pendulum_lin_6 --lamb 1 --steps 6 --bottleneck 6  --lr_update 30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0 --seed 0
+
+
+# Example pendulum linearized with noise 0.03
+##############################################
+python driver.py --alpha 1 --dataset pendulum_lin --noise 0.03 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_pendulum_lin_6_noise_03 --lamb 1 --steps 6 --bottleneck 6 --lr_update 30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 0 --wd 0 --seed 0
+python driver.py --alpha 1 --dataset pendulum_lin --noise 0.03 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_back_pendulum_lin_6_noise_03 --lamb 1 --steps 6 --bottleneck 6  --lr_update 30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 1 --steps_back 6 --nu 1e-1  --eta 1e-2 --wd 0 --seed 0
+
+
+
+
+
+
+# Example pendulum with without noise
+##############################################
+python driver.py --alpha 1 --dataset pendulum --noise 0.0 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_pendulum_6 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 0 --wd 0.0 --seed 0
+python driver.py --alpha 1 --dataset pendulum --noise 0.0 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_back_pendulum_6 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0.0 --seed 0
+
+
+
+# Example pendulum with noise 0.05
+##############################################
+python driver.py --alpha 1 --dataset pendulum --noise 0.05 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_pendulum_6_noise_03 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 0 --wd 0 --seed 0
+python driver.py --alpha 1 --dataset pendulum --noise 0.05 --lr 1e-2 --epochs 600 --batch 64 --folder results_det_back_pendulum_6_noise_03 --lamb 1 --steps 6 --bottleneck 6  --lr_update  30 200 400 500 --lr_decay 0.2 --pred_steps 1000 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0 --seed 0
+
+
+
+
+
+
+
+
+
+
+# Example flow past cylinder with alpha 2
+##############################################
+python driver.py --dataset flow --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_flow_alpha2 --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 0 --wd 5e-4 --seed 0
+
+python driver.py --dataset flow --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_back_flow_alpha2 --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 5e-4 --seed 0
+
+
+
+
+# Example flow past cylinder with alpha 2 with noise
+##############################################
+
+python driver.py --dataset flow_noisy --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_flow_alpha2_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 0 --wd 5e-4 --seed 0
+
+python driver.py --dataset flow_noisy --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_back_flow_alpha2_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 5e-4 --seed 0
+
+
+
+
+
+
+
+
+
+
+# Example climate data with alpha 4
+##############################################
+
+python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_sst_alpha2 --lamb 1 --steps 6 --bottleneck 12 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 0 --wd 1e-6 --seed 3
+python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_back_sst_alpha2 --lamb 1 --steps 6 --bottleneck 12 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0.0 --seed 3
+
+
+
+
+python driver_simulation.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder sim_det_sst_10_noise --lamb 1 --steps 6 --bottleneck 12  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 0 --wd 1e-6
+python driver_simulation.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder sim_det_back_sst_10_noise --lamb 1 --steps 6 --bottleneck 12  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0.0
+
+
+
+
+
+
+
+
+
+
+# sphere_s2_tf
+##############################################
+python driver.py --dataset sphere_s2_tf --alpha 4 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_sphere_s2_tf --lamb 1 --steps 6 --bottleneck 8  --lr_update 30 300 600 --lr_decay 0.2 --pred_steps 150 --backward 0 --wd 1e-6 --seed 1
+python driver.py --dataset sphere_s2_tf --alpha 4 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_back_sphere_s2_tf --lamb 1 --steps 6 --bottleneck 8  --lr_update 30 300 600 --lr_decay 0.2 --pred_steps 150 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0.0 --seed 1
+
+
+
+
+# sphere_s2_ns
+##############################################
+python driver.py --dataset sphere_s2_ns --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_sphere_s2_ns --lamb 1 --steps 6 --bottleneck 8  --lr_update 30 300 600 --lr_decay 0.2 --pred_steps 150 --backward 0 --wd 1e-6 --seed 1
+python driver.py --dataset sphere_s2_ns --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_back_sphere_s2_ns --lamb 1 --steps 6 --bottleneck 8  --lr_update 30 300 600 --lr_decay 0.2 --pred_steps 150 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0.0 --seed 1
+
+
+
+
+
+
+
+
+
+
