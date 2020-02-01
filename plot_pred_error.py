@@ -99,64 +99,57 @@ if test == 'no':
 
 
 
-
-
-
-    result1 = np.load('results_det_flow_alpha2_noise/000_pred.npy')                  
-    result2 = np.load('results_det_back_flow_alpha2_noise/000_pred.npy') 
-    
-    
-
-    
-    result1 = np.load('results_det_flow_alpha2/000_pred.npy')                  
-    result2 = np.load('results_det_back_flow_alpha2/000_pred.npy') 
-    
-
-
-
-
-
-
-
-
     result1 = np.load('results_det_pendulum_lin_6/000_pred.npy')                  
     result2 = np.load('results_det_back_pendulum_lin_6/000_pred.npy') 
 
 
-
-    result1 = np.load('results_det_pendulum_lin_6_noise_05/000_pred.npy')                  
-    result2 = np.load('results_det_back_pendulum_lin_6_noise_05/000_pred.npy') 
-
-
-
-
+    result1 = np.load('results_det_pendulum_lin_6_noise_03/000_pred.npy')                  
+    result2 = np.load('results_det_back_pendulum_lin_6_noise_03/000_pred.npy') 
 
 
 
     result1 = np.load('results_det_pendulum_6/000_pred.npy')                  
     result2 = np.load('results_det_back_pendulum_6/000_pred.npy') 
+    
 
     result1 = np.load('results_det_pendulum_6_noise_03/000_pred.npy')                  
     result2 = np.load('results_det_back_pendulum_6_noise_03/000_pred.npy') 
  
 
-
-
-
-
+  
+    
 
 
 
 else:
 
 
-    
     result1 = np.load('results_det_sst_alpha2/000_pred.npy')                  
     result2 = np.load('results_det_back_sst_alpha2/000_pred.npy') 
     
     
+    result1 = np.load('results_det_flow_alpha4_noise/000_pred.npy')                  
+    result2 = np.load('results_det_back_flow_alpha4_noise/000_pred.npy') 
+    
+        
+
+
     
 
+
+
+    result1 = np.load('results_det_flow_alpha4_noise/000_pred.npy')                  
+    result2 = np.load('results_det_back_flow_alpha4_noise/000_pred.npy') 
+    
+
+
+ 
+    result1 = np.load('results_det_flow_alpha2_noise/000_pred.npy')                  
+    result2 = np.load('results_det_back_flow_alpha2_noise/000_pred.npy') 
+        
+    
+  
+    
 
 
 #fig = plt.figure(figsize=(6.1,6.1))
@@ -185,9 +178,9 @@ plt.fill_between(x=range(result2.shape[1]), y1=np.percentile(result2, 10, axis=0
 #             
                         
                  
-plt.tick_params(axis='x', labelsize=24) 
-plt.tick_params(axis='y', labelsize=24) 
-plt.tick_params(axis='both', which='minor', labelsize=24)
+plt.tick_params(axis='x', labelsize=26) 
+plt.tick_params(axis='y', labelsize=26) 
+plt.tick_params(axis='both', which='minor', labelsize=26)
 
 #plt.locator_params(axis='y', nbins=6)
 #plt.locator_params(axis='x', nbins=6)
@@ -199,9 +192,9 @@ plt.grid(False)
 maxmax = np.maximum(result1.max(), result2.max())
 #plt.ylim([0.000, 0.045])
 #plt.ylim([0.000, 0.02])
-plt.ylim([0.000, 0.9])
+plt.ylim([0.03, 0.8])
 #plt.legend(fontsize=24, loc="lower right")
-#plt.legend(fontsize=24, loc="upper left")
+#plt.legend(fontsize=36, loc="upper left")
 #plt.legend(fontsize=24, loc="upper right")
 
 fig.tight_layout()  

@@ -365,7 +365,7 @@ def flow_cylinder_noisy():
     t, m, n = X.shape
  
     signal = np.var(X)
-    noise = signal / 20
+    noise = signal / 30
     X = X + np.random.normal(0, noise**0.5, X.shape) * 1.0
 
 

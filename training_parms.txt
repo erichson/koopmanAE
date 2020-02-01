@@ -49,10 +49,33 @@ python driver.py --dataset flow --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --fo
 # Example flow past cylinder with alpha 2 with noise
 ##############################################
 
-python driver.py --dataset flow_noisy --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_flow_alpha2_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 0 --wd 5e-4 --seed 0
+python driver.py --dataset flow_noisy --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_flow_alpha2_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 0 --wd 0 --seed 0
 
-python driver.py --dataset flow_noisy --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_back_flow_alpha2_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 5e-4 --seed 0
+python driver.py --dataset flow_noisy --alpha 2 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_back_flow_alpha2_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0 --seed 0
 
+
+
+
+
+
+
+
+# Example flow past cylinder with alpha 4
+##############################################
+python driver.py --dataset flow --alpha 4 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_flow_alpha4 --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 0 --wd 5e-4 --seed 0
+
+python driver.py --dataset flow --alpha 4 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_back_flow_alpha4 --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 5e-4 --seed 0
+
+
+
+
+
+# Example flow past cylinder with alpha 4 with noise
+##############################################
+
+python driver.py --dataset flow_noisy --alpha 4 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_flow_alpha4_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 0 --wd 5e-4 --seed 0
+
+python driver.py --dataset flow_noisy --alpha 4 --lr 1e-2 --epochs 900 --batch 32 --folder results_det_back_flow_alpha4_noise --lamb 1 --steps 6 --bottleneck 10  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 100 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 5e-4 --seed 0
 
 
 
@@ -65,14 +88,21 @@ python driver.py --dataset flow_noisy --alpha 2 --lr 1e-2 --epochs 900 --batch 3
 # Example climate data with alpha 4
 ##############################################
 
-python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_sst_alpha2 --lamb 1 --steps 6 --bottleneck 12 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 0 --wd 1e-6 --seed 3
-python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_back_sst_alpha2 --lamb 1 --steps 6 --bottleneck 12 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0.0 --seed 3
+python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_sst_alpha2 --lamb 1 --steps 6 --bottleneck 12 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 0 --wd 5e-4 --seed 3
+python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_back_sst_alpha2 --lamb 1 --steps 6 --bottleneck 12 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 5e-4 --seed 3
 
 
 
 
-python driver_simulation.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder sim_det_sst_10_noise --lamb 1 --steps 6 --bottleneck 12  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 0 --wd 1e-6
-python driver_simulation.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder sim_det_back_sst_10_noise --lamb 1 --steps 6 --bottleneck 12  --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 0.0
+
+
+
+# Example climate data with alpha 6
+##############################################
+
+python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_sst_alpha6 --lamb 1 --steps 6 --bottleneck 20 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 0 --wd 5e-4 --seed 3
+python driver.py --dataset sst --alpha 4 --lr 1e-2 --epochs 900 --batch 64 --folder results_det_back_sst_alpha6 --lamb 1 --steps 6 --bottleneck 20 --lr_update 30 200 600 --lr_decay 0.2 --pred_steps 180 --backward 1 --steps_back 6 --nu 1e-1 --eta 1e-2 --wd 5e-4 --seed 3
+
 
 
 
