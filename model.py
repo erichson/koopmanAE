@@ -2,7 +2,12 @@ from torch import nn
 from torch.autograd import grad
 import torch
 from torch.autograd import Variable, Function
+import numpy as np
 
+def gaussian_init_(n_units, std=1):    
+    sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))
+    Omega = sampler.sample((n_units, n_units))[..., 0]  
+    return Omega
 
 
 class encoderNet(nn.Module):
@@ -10,7 +15,6 @@ class encoderNet(nn.Module):
         super(encoderNet, self).__init__()
         self.N = m * n
         self.tanh = nn.Tanh()
-        self.relu = nn.ReLU()
 
         self.fc1 = nn.Linear(self.N, 16*ALPHA)
         self.fc2 = nn.Linear(16*ALPHA, 16*ALPHA)
@@ -27,6 +31,7 @@ class encoderNet(nn.Module):
         x = self.tanh(self.fc1(x))
         x = self.tanh(self.fc2(x))        
         x = self.fc3(x)
+        
         return x
 
 
@@ -39,12 +44,10 @@ class decoderNet(nn.Module):
         self.b = b
 
         self.tanh = nn.Tanh()
-        self.relu = nn.ReLU()
 
         self.fc1 = nn.Linear(b, 16*ALPHA)
         self.fc2 = nn.Linear(16*ALPHA, 16*ALPHA)
         self.fc3 = nn.Linear(16*ALPHA, m*n)
-
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -57,45 +60,47 @@ class decoderNet(nn.Module):
         x = self.tanh(self.fc1(x)) 
         x = self.tanh(self.fc2(x)) 
         x = self.tanh(self.fc3(x))
-        #x = (self.fc3(x))
-        
-        
         x = x.view(-1, 1, self.m, self.n)
         return x
 
 
 
-
 class dynamics(nn.Module):
-    def __init__(self, b):
+    def __init__(self, b, init_scale):
         super(dynamics, self).__init__()
         self.dynamics = nn.Linear(b, b, bias=False)
+        self.dynamics.weight.data = gaussian_init_(b, std=1)           
+        U, _, V = torch.svd(self.dynamics.weight.data)
+        self.dynamics.weight.data = torch.mm(U, V.t()) * init_scale
 
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
-                #idx = torch.arange(0, b, out=torch.LongTensor())
-                #m.weight.data *= 1e-6
-                #m.weight.data[idx,idx] = torch.eye(b)[idx,idx].float()
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0)         
+        
+    def forward(self, x):
+        x = self.dynamics(x)
+        return x
+
+
+class dynamics_back(nn.Module):
+    def __init__(self, b, omega):
+        super(dynamics_back, self).__init__()
+        self.dynamics = nn.Linear(b, b, bias=False)
+        self.dynamics.weight.data = torch.pinverse(omega.dynamics.weight.data.t())     
 
     def forward(self, x):
-        # 1 to 1 map
         x = self.dynamics(x)
         return x
 
 
 
-class shallow_autoencoder(nn.Module):
-    def __init__(self, m, n, b, steps, steps_back, alpha = 1):
-        super(shallow_autoencoder, self).__init__()
+
+class koopmanAE(nn.Module):
+    def __init__(self, m, n, b, steps, steps_back, alpha = 1, init_scale=1):
+        super(koopmanAE, self).__init__()
         self.steps = steps
         self.steps_back = steps_back
         
         self.encoder = encoderNet(m, n, b, ALPHA = alpha)
-        self.dynamics = dynamics(b)
-        self.backdynamics = dynamics(b)
+        self.dynamics = dynamics(b, init_scale)
+        self.backdynamics = dynamics_back(b, self.dynamics)
         self.decoder = decoderNet(m, n, b, ALPHA = alpha)
 
 
@@ -111,7 +116,7 @@ class shallow_autoencoder(nn.Module):
                 q = self.dynamics(q)
                 out.append(self.decoder(q))
 
-            out.append(self.decoder(z.contiguous())) # Identity
+            out.append(self.decoder(z.contiguous())) 
             return out, out_back    
 
         if mode == 'backward':
@@ -119,39 +124,5 @@ class shallow_autoencoder(nn.Module):
                 q = self.backdynamics(q)
                 out_back.append(self.decoder(q))
                 
-            out_back.append(self.decoder(z.contiguous())) # Identity
+            out_back.append(self.decoder(z.contiguous()))
             return out, out_back
-
-
-class RNN_AE(nn.Module):
-
-    def __init__(self, m, n, b, steps, steps_back, num_layers=1, alpha=1):
-
-        super(RNN_AE, self).__init__()
-        self.steps = steps
-        self.steps_back = steps_back
-        self.encoder = encoderNet(m, n, b, ALPHA=alpha)
-        self.decoder = decoderNet(m, n, b, ALPHA=alpha)
-        self.dynamics = torch.nn.modules.RNN(input_size=b, hidden_size=b, num_layers=num_layers)
-        self.backdynamics = torch.nn.modules.RNN(input_size=b, hidden_size=b, num_layers=num_layers)
-
-    def forward(self, x, mode='forward'):
-        z = self.encoder(x.contiguous())
-        q = z.contiguous()
-        hidden = None
-        out = []
-        out_back = []
-
-        if mode == 'forward':
-            for _ in range(self.steps):
-                a, hidden = self.dynamics.forward(q, hidden)
-                out.append(self.decoder(a))
-
-        if mode == 'backward':
-            for _ in range(self.steps_back):
-                a, hidden = self.backdynamics.forward(q, hidden)
-                out_back.append(self.decoder(a))
-
-        return out, out_back
-
-

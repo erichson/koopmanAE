@@ -1,13 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri May  3 15:18:58 2019
-test
-@author: ben
-"""
-
 import torch
-import torchvision
 from torch import nn
 from torch import autograd
 from torch import optim
@@ -24,31 +15,17 @@ import numpy as np
 
 from tools import *
 
-from Adam_new import *
-
-#from stable_projection import *
 
 
 def train(model, train_loader, test_loader, lr, weight_decay, 
-          lamb, num_epochs, learning_rate_change, epoch_update, nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1, criterion=nn.MSELoss()):
+          lamb, num_epochs, learning_rate_change, epoch_update, 
+          nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1, gradclip=1):
 
-    #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     device = get_device()
-
-    alpha_list = []
-    for idx, (name, param) in enumerate(model.named_parameters()):
-                if param.requires_grad:
-                    if 'dynamics' not in name:
-                        alpha_list.append(idx)            
-            
-        
-    optimizer = AdamPCL(model.parameters(), lr=lr, 
-                                weight_decay=weight_decay, 
-                                weight_decay_adapt=0.0, 
-                                alpha_list=alpha_list)    
              
             
-    def exp_lr_scheduler(optimizer, epoch, lr_decay_rate=0.8, decayEpoch=[]):
+    def lr_scheduler(optimizer, epoch, lr_decay_rate=0.8, decayEpoch=[]):
                     """Decay learning rate by a factor of lr_decay_rate every lr_decay_epoch epochs"""
                     if epoch in decayEpoch:
                         for param_group in optimizer.param_groups:
@@ -57,19 +34,10 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                     else:
                         return optimizer
                         
-                
-#    def wd_scheduler(optimizer, weight_decay):
-#                """Decay learning rate by a factor of lr_decay_rate every lr_decay_epoch epochs"""
-#                for param_group in optimizer.param_groups:
-#                    param_group['weight_decay_adapt'] = weight_decay
-#                return optimizer  
-
                      
         
 
     criterion = nn.MSELoss().to(device)
-    #criterion2 = nn.L1Loss().to(device)
-
 
 
     epoch_hist = []
@@ -110,11 +78,7 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                     else:
                         loss_bwd += criterion(out_back[k], data_list[::-1][k+1].to(device))
                         
-                        
-                #loss_identity += criterion(out_back[-1], data_list[-1].to(device)) * steps_back * nu
-                #loss_identity += criterion(out_back[1], data_list[::-1][0].to(device))                        
-                                            
-                        
+                               
                 A = model.dynamics.dynamics.weight
                 B = model.backdynamics.dynamics.weight
 
@@ -151,10 +115,11 @@ def train(model, train_loader, test_loader, lr, weight_decay,
             # ===================backward====================
             optimizer.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), gradclip) # gradient clip
             optimizer.step()           
 
         # schedule learning rate decay    
-        exp_lr_scheduler(optimizer, epoch, lr_decay_rate=learning_rate_change, decayEpoch=epoch_update)
+        lr_scheduler(optimizer, epoch, lr_decay_rate=learning_rate_change, decayEpoch=epoch_update)
         loss_hist.append(loss)                
         epoch_loss.append(epoch)
         
@@ -175,13 +140,6 @@ def train(model, train_loader, test_loader, lr, weight_decay,
                     w, _ = np.linalg.eig(model.dynamics.dynamics.weight.data.cpu().numpy())
                     print(np.abs(w))
 
-                #print(w)
-
-    plt.figure()
-    plt.plot(epoch_loss[1:], loss_hist[1:])
-    plt.yscale('log')
-    plt.savefig('loss' +'.png')
-    plt.close()
 
     if backward == 1:
         loss_consist = loss_consist.item()
