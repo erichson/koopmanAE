@@ -17,7 +17,7 @@ Use the following code to plot the results:
 python plot_pred_error.py
 ```
 
-<img src="https://github.com/erichson/koopmanAE/blob/master/plot/pred_pendulum.png" width="600">
+<img src="https://github.com/erichson/koopmanAE/blob/master/plot/pred_pendulum.png" width="800">
 
 
 ##  Reference
