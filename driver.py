@@ -128,24 +128,11 @@ for i in np.arange(args.steps,-1, -1):
     start += 1
 
 train_data = torch.utils.data.TensorDataset(*trainDat)
-testDat = []
-start = 0
-for i in np.arange(args.steps,-1, -1):
-    if i == 0:
-        testDat.append(Xtest[start:].float())
-    else:
-        testDat.append(Xtest[start:-i].float())
-    start += 1
-
-test_data = torch.utils.data.TensorDataset(*testDat)
-del(trainDat, testDat)
+del(trainDat)
 
 train_loader = DataLoader(dataset = train_data,
                               batch_size = args.batch,
                               shuffle = True)
-test_loader = DataLoader(dataset = test_data,
-                              batch_size = args.batch_test,
-                              shuffle = False)
 
 #==============================================================================
 # Model
@@ -170,7 +157,7 @@ print(model)
 #==============================================================================
 # Start training
 #==============================================================================
-model, optimizer, epoch_hist = train(model, train_loader, test_loader,
+model, optimizer, epoch_hist = train(model, train_loader,
                     lr=args.lr, weight_decay=args.wd, lamb=args.lamb, num_epochs = args.epochs,
                     learning_rate_change=args.lr_decay, epoch_update=args.lr_update,
                     nu = args.nu, eta = args.eta, backward=args.backward, steps=args.steps, steps_back=args.steps_back,

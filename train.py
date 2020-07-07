@@ -6,7 +6,7 @@ from tools import *
 
 
 
-def train(model, train_loader, test_loader, lr, weight_decay, 
+def train(model, train_loader, lr, weight_decay, 
           lamb, num_epochs, learning_rate_change, epoch_update, 
           nu=0.0, eta=0.0, backward=0, steps=1, steps_back=1, gradclip=1):
 
