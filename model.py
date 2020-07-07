@@ -1,8 +1,5 @@
 from torch import nn
-from torch.autograd import grad
 import torch
-from torch.autograd import Variable, Function
-import numpy as np
 
 def gaussian_init_(n_units, std=1):    
     sampler = torch.distributions.Normal(torch.Tensor([0]), torch.Tensor([std/n_units]))

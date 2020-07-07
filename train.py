@@ -1,16 +1,5 @@
 import torch
 from torch import nn
-from torch import autograd
-from torch import optim
-from torchvision import transforms, datasets
-from torch.autograd import grad
-import torch.nn.functional as F
-
-from torch.utils.data import DataLoader, Dataset
-from torch.autograd import Variable, Function
-
-import torch.nn.init as init
-
 import numpy as np
 
 from tools import *
